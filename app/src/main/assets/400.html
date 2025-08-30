@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Http Server</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+            href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css"
+            rel="stylesheet"
+    />
+    <style>
+    body {
+      background-color: #fff3e0; /* light orange */
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .card {
+      max-width: 420px;
+      padding: 30px 20px;
+      border-radius: 10px;
+    }
+
+    .emoji {
+      font-size: 64px;
+      margin-bottom: 20px;
+    }
+
+    .btn-custom {
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+<div class="card z-depth-3 white center-align">
+    <div class="emoji">❌</div>
+    <h5 class="orange-text text-darken-2">Bad Request</h5>
+    <p class="grey-text text-darken-1">Something's not quite right with your request.</p>
+    <p>{{error_code}}</p>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+</body>
+</html>

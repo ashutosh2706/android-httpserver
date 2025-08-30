@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>HTTP Server</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Material Icons -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <!-- Materialize CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" rel="stylesheet">
+
+    <style>
+        body {
+            background-color: #e1f5fe; /* light blue */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .center-box {
+            text-align: center;
+            padding: 30px 20px;
+            width: 100%;
+            max-width: 400px;
+            border-radius: 12px;
+            background-color: #ffffff;
+        }
+
+        .emoji {
+            font-size: 60px;
+            margin-bottom: 15px;
+        }
+
+        .app-label {
+            padding: 10px 0 20px 0;
+            color: #0288d1; /* sky blue text */
+        }
+
+        .btn-custom {
+            background-color: #03a9f4; /* sky blue */
+            border-radius: 30px;
+            width: 100%;
+        }
+
+        .btn-custom:hover {
+            background-color: #0288d1; /* darker blue on hover */
+        }
+
+        a.register-link {
+            display: block;
+            margin-top: 20px;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+
+<div class="center-box z-depth-2">
+    <div class="emoji">📥</div>
+    <h5 class="app-label">{{filename}}</h5>
+    <a href="{{url}}" class="btn btn-custom waves-effect waves-light">
+        Download
+    </a>
+</div>
+
+<!-- Materialize JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+</body>
+</html>

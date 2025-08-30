@@ -1,0 +1,164 @@
+package com.android.httpserver.server;
+
+import static com.android.httpserver.MainActivity.fileMap;
+
+import android.content.ContentResolver;
+import android.content.Context;
+import android.net.Uri;
+
+import com.android.httpserver.model.FileInfo;
+import com.android.httpserver.response.BadRequest;
+import com.android.httpserver.response.InternalServerError;
+import com.android.httpserver.response.NoContent;
+import com.android.httpserver.response.NotFound;
+import com.android.httpserver.response.Accept;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.Inet4Address;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.net.SocketException;
+import java.nio.charset.StandardCharsets;
+import java.util.Enumeration;
+import java.util.List;
+import java.util.Map;
+
+import fi.iki.elonen.NanoHTTPD;
+
+public class HttpServer extends NanoHTTPD {
+
+    private Context context;
+    private final ContentResolver contentResolver;
+
+    public HttpServer(Context context, int port, ContentResolver contentResolver) {
+        super(port);
+        this.context = context;
+        this.contentResolver = contentResolver;
+    }
+
+    @Override
+    public Response serve(IHTTPSession session) {
+        Method method = session.getMethod();
+        String uri = session.getUri();
+        // load the assets
+        InputStream notFoundStream = null;
+        InputStream noContentStream = null;
+        InputStream serverErrorStream = null;
+        InputStream badRequestStream = null;
+
+        try {
+            notFoundStream = context.getAssets().open("404.html");
+            noContentStream = context.getAssets().open("204.html");
+            serverErrorStream = context.getAssets().open("500.html");
+            badRequestStream = context.getAssets().open("400.html");
+        } catch (IOException e) {
+            return new InternalServerError("500 INTERNAL SERVER ERROR: "+e.getMessage(), MimeTypes.TEXT_PLAIN).build();
+        }
+
+        if(Method.GET.equals(method) && "/".equals(uri)) {
+
+            if(fileMap.isEmpty()) {
+                return new NoContent("204 NO CONTENT: Requested resource is not available", MimeTypes.TEXT_HTML).build(noContentStream);
+            }
+
+            try {
+                InputStream okStream = context.getAssets().open("200.html");
+                BufferedReader reader = new BufferedReader(new InputStreamReader(okStream, StandardCharsets.UTF_8));
+                StringBuilder sb = new StringBuilder();
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    sb.append(line).append("\n");
+                }
+                reader.close();
+                String html = sb.toString();
+                FileInfo fileInfo = null;
+                String uid = "";
+                for (Map.Entry<String, FileInfo> entry: fileMap.entrySet()) {
+                    fileInfo = entry.getValue();
+                    uid = entry.getKey();
+                }
+
+                if(fileInfo != null && uid.length() > 0) {
+                    String fileName = fileInfo.getFileName();
+                    String downloadUrl = "/download?id=" + uid;
+                    html = html.replace("{{filename}}", fileName);
+                    html = html.replace("{{url}}", downloadUrl);
+                    return new Accept(html, MimeTypes.TEXT_HTML).build();
+                }
+
+                return new NoContent("204 NO CONTENT: Requested resource is not available", MimeTypes.TEXT_HTML).build(noContentStream);
+
+            } catch (IOException e) {
+                // 500 error
+                return new InternalServerError("500 INTERNAL SERVER ERROR: "+e.getMessage(), MimeTypes.TEXT_PLAIN).build(serverErrorStream, e.getClass().getSimpleName());
+            }
+        }
+        if(Method.GET.equals(method) && "/download".equals(uri)) {
+            Map<String, List<String>> params = session.getParameters();
+            List<String> ids = params.get("id");
+
+            if(ids == null || ids.isEmpty()) {
+                return new BadRequest("400 BAD REQUEST: Missing parameter id", MimeTypes.TEXT_PLAIN).build(badRequestStream);
+            }
+
+            String id=ids.get(0);
+            // check if fileMap is not empty
+            if(fileMap.isEmpty()) {
+                return new NoContent("204 NO CONTENT: Requested resource is not available", MimeTypes.TEXT_HTML).build(noContentStream);
+            }
+
+            Uri fileUri = null;
+            String idFromMap = "", fileName = "download_file";
+            for(Map.Entry<String, FileInfo> infoEntry: fileMap.entrySet()) {
+                fileUri = infoEntry.getValue().getUri();
+                fileName = infoEntry.getValue().getFileName();
+                idFromMap = infoEntry.getKey();
+            }
+
+            if(fileUri != null && idFromMap.equals(id)) {
+                try {
+                    InputStream inputStream = contentResolver.openInputStream(fileUri);
+                    String mimeType = contentResolver.getType(fileUri);
+                    if(mimeType == null) {
+                        mimeType = MimeTypes.APPLICATION_OCTET_STREAM;
+                    }
+                    // remove entry from map
+                    fileMap.clear();
+                    // Response response = newChunkedResponse(Response.Status.OK, mimeType, inputStream);
+                    Response response = new Accept(null, mimeType).build(inputStream);
+                    response.addHeader("Content-Disposition", "attachment; filename=\"" + fileName + "\"");
+                    return response;
+                } catch (Exception e) {
+                    return new InternalServerError("500 INTERNAL SERVER ERROR: "+e.getMessage(), MimeTypes.TEXT_PLAIN).build(serverErrorStream, e.getClass().getSimpleName());
+                }
+
+            } else {
+                return new NoContent("204 NO CONTENT: Requested resource is not available", MimeTypes.TEXT_HTML).build(noContentStream);
+            }
+        }
+
+        String errorMsg = "Path: " + uri + " was not found";
+        return new NotFound("404 NOT FOUND: "+errorMsg, MimeTypes.TEXT_HTML).build(notFoundStream);
+    }
+
+
+    public String getIPAddress() {
+        try {
+            for(Enumeration<NetworkInterface> en = NetworkInterface.getNetworkInterfaces(); en.hasMoreElements();) {
+                NetworkInterface inf = en.nextElement();
+                for(Enumeration<InetAddress> enumIpAdd = inf.getInetAddresses(); enumIpAdd.hasMoreElements();) {
+                    InetAddress inetAddress = enumIpAdd.nextElement();
+                    if(!inetAddress.isLoopbackAddress() && inetAddress instanceof Inet4Address) {
+                        return inetAddress.getHostAddress();
+                    }
+                }
+            }
+        } catch (SocketException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+}
