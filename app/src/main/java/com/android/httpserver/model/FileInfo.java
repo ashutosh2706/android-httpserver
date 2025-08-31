@@ -7,6 +7,7 @@ public class FileInfo {
     Uri uri;
     String uid;
     String fileName;
+    String fileSize;
     LocalDateTime createdAt;
 
     public String getFileName() {
@@ -41,13 +42,22 @@ public class FileInfo {
         this.createdAt = createdAt;
     }
 
+    public String getFileSize() {
+        return fileSize;
+    }
+
+    public void setFileSize(String fileSize) {
+        this.fileSize = fileSize;
+    }
+
     public FileInfo() {
     }
 
-    public FileInfo(Uri uri, String uid, LocalDateTime createdAt, String fileName) {
+    public FileInfo(Uri uri, String uid, LocalDateTime createdAt, String fileName, String fileSize) {
         this.uri = uri;
         this.uid = uid;
         this.createdAt = createdAt;
         this.fileName = fileName;
+        this.fileSize = fileSize;
     }
 }
