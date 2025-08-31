@@ -21,7 +21,7 @@ public class NotFound implements NanoHttpResponse {
         return NanoHTTPD.newFixedLengthResponse(
                 NanoHTTPD.Response.Status.OK,
                 mimeType,
-                content
+                code+content
         );
     }
 

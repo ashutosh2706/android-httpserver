@@ -26,7 +26,7 @@ public class BadRequest implements NanoHttpResponse {
         return NanoHTTPD.newFixedLengthResponse(
                 NanoHTTPD.Response.Status.OK,
                 mimeType,
-                content
+                code+content
         );
     }
 
@@ -40,7 +40,7 @@ public class BadRequest implements NanoHttpResponse {
             }
             bufferedReader.close();
             String html = sb.toString();
-            html = html.replace("{{error_code}}", content);
+            html = html.replace("{{error_code}}", code+content);
             // this.content = html;
             return NanoHTTPD.newFixedLengthResponse(
                     NanoHTTPD.Response.Status.OK,

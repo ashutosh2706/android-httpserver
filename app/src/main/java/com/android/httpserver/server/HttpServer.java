@@ -63,13 +63,13 @@ public class HttpServer extends NanoHTTPD {
             serverErrorStream = context.getAssets().open("500.html");
             badRequestStream = context.getAssets().open("400.html");
         } catch (IOException e) {
-            return new InternalServerError("500 INTERNAL SERVER ERROR: "+e.getMessage(), MimeTypes.TEXT_PLAIN).build();
+            return new InternalServerError(e.getMessage(), MimeTypes.TEXT_PLAIN).build();
         }
 
         if(Method.GET.equals(method) && "/".equals(uri)) {
 
             if(fileMap.isEmpty()) {
-                return new NoContent("204 NO CONTENT: Requested resource is not available", MimeTypes.TEXT_HTML).build(noContentStream);
+                return new NoContent("Requested resource is not available", MimeTypes.TEXT_HTML).build(noContentStream);
             }
 
             try {
@@ -97,11 +97,11 @@ public class HttpServer extends NanoHTTPD {
                     return new Accept(html, MimeTypes.TEXT_HTML).build();
                 }
 
-                return new NoContent("204 NO CONTENT: Requested resource is not available", MimeTypes.TEXT_HTML).build(noContentStream);
+                return new NoContent("Requested resource is not available", MimeTypes.TEXT_HTML).build(noContentStream);
 
             } catch (IOException e) {
                 // 500 error
-                return new InternalServerError("500 INTERNAL SERVER ERROR: "+e.getMessage(), MimeTypes.TEXT_PLAIN).build(serverErrorStream, e.getClass().getSimpleName());
+                return new InternalServerError(e.getMessage(), MimeTypes.TEXT_PLAIN).build(serverErrorStream, e.getClass().getSimpleName());
             }
         }
         if(Method.GET.equals(method) && "/download".equals(uri)) {
@@ -109,17 +109,17 @@ public class HttpServer extends NanoHTTPD {
             List<String> ids = params.get("id");
 
             if(ids == null || ids.isEmpty()) {
-                return new BadRequest("400 BAD REQUEST: Missing parameter id", MimeTypes.TEXT_PLAIN).build(badRequestStream);
+                return new BadRequest("Missing parameter id", MimeTypes.TEXT_PLAIN).build(badRequestStream);
             }
 
             String id=ids.get(0);
             // check if fileMap is not empty
             if(fileMap.isEmpty()) {
-                return new NoContent("204 NO CONTENT: Requested resource is not available", MimeTypes.TEXT_HTML).build(noContentStream);
+                return new NoContent("Requested resource is not available", MimeTypes.TEXT_HTML).build(noContentStream);
             }
 
             Uri fileUri = null;
-            String idFromMap = "", fileName = "download_file";
+            String idFromMap = "", fileName = "unknown";
             String fileSize = "";
             for(Map.Entry<String, FileInfo> infoEntry: fileMap.entrySet()) {
                 fileUri = infoEntry.getValue().getUri();
@@ -139,21 +139,20 @@ public class HttpServer extends NanoHTTPD {
                     // remove entry from map
                     fileMap.clear();
                     saveHistory(fileName, fileSize, mimeType);
-                    // Response response = newChunkedResponse(Response.Status.OK, mimeType, inputStream);
                     Response response = new Accept(null, mimeType).build(inputStream);
                     response.addHeader("Content-Disposition", "attachment; filename=\"" + fileName + "\"");
                     return response;
                 } catch (Exception e) {
-                    return new InternalServerError("500 INTERNAL SERVER ERROR: "+e.getMessage(), MimeTypes.TEXT_PLAIN).build(serverErrorStream, e.getClass().getSimpleName());
+                    return new InternalServerError(e.getMessage(), MimeTypes.TEXT_PLAIN).build(serverErrorStream, e.getClass().getSimpleName());
                 }
 
             } else {
-                return new NoContent("204 NO CONTENT: Requested resource is not available", MimeTypes.TEXT_HTML).build(noContentStream);
+                return new NoContent("Requested resource is not available", MimeTypes.TEXT_HTML).build(noContentStream);
             }
         }
 
         String errorMsg = "Path: " + uri + " was not found";
-        return new NotFound("404 NOT FOUND: "+errorMsg, MimeTypes.TEXT_HTML).build(notFoundStream);
+        return new NotFound(errorMsg, MimeTypes.TEXT_HTML).build(notFoundStream);
     }
 
     private void saveHistory(String fileName, String fileSize, String mimeType) {
