@@ -3,6 +3,7 @@ package com.android.httpserver;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.lifecycle.ViewModelProvider;
 
 import android.content.Intent;
 import android.database.Cursor;
@@ -19,13 +20,13 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.android.httpserver.component.BottomSheet;
+import com.android.httpserver.component.HistoryViewModel;
 import com.android.httpserver.model.FileInfo;
-import com.android.httpserver.model.History;
 import com.android.httpserver.server.HttpServer;
 import com.android.httpserver.util.QRGen;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.UUID;
 import java.time.LocalDateTime;
@@ -41,7 +42,7 @@ public class MainActivity extends AppCompatActivity {
     static final int FILE_PICKER_REQUEST_CODE = 101;
     public static ConcurrentHashMap<String, FileInfo> fileMap;
     private static boolean SERVER_RUNNING = false;
-
+    private HistoryViewModel historyViewModel;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,11 +54,12 @@ public class MainActivity extends AppCompatActivity {
         fileNameView = findViewById(R.id.file_name);
         ipView = findViewById(R.id.ip_view);
         qrView = findViewById(R.id.qr_view);
+        historyViewModel = new ViewModelProvider(this, ViewModelProvider.AndroidViewModelFactory.getInstance(getApplication())).get(HistoryViewModel.class);
 
         ipView.setText("");
         qrView.setImageDrawable(null);
 
-        httpServer = new HttpServer(MainActivity.this, PORT, getContentResolver());
+        httpServer = new HttpServer(MainActivity.this, PORT, getContentResolver(), historyViewModel);
 
         fileMap = new ConcurrentHashMap<>();
 
@@ -93,11 +95,12 @@ public class MainActivity extends AppCompatActivity {
                 /* don't require persistent read permission */
                 // getContentResolver().takePersistableUriPermission(fileUri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
                 String fileName = getFileNameFromUri(fileUri);
+                String fileSize = getFileSizeReadable(fileUri);
                 String uid = UUID.randomUUID().toString().substring(0, 5).trim();
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    fileMap.put(uid, new FileInfo(fileUri, uid, LocalDateTime.now(), fileName));
+                    fileMap.put(uid, new FileInfo(fileUri, uid, LocalDateTime.now(), fileName, fileSize));
                 } else {
-                    fileMap.put(uid, new FileInfo(fileUri, uid, null, fileName));
+                    fileMap.put(uid, new FileInfo(fileUri, uid, null, fileName, fileSize));
                 }
                 fileNameView.setText(fileName);
             }
@@ -128,9 +131,39 @@ public class MainActivity extends AppCompatActivity {
         return result;
     }
 
+    private String getFileSizeReadable(Uri fileUri) {
+        Cursor cursor = getContentResolver().query(fileUri, null, null, null, null);
+        String result = "";
+
+        if (cursor != null && cursor.moveToFirst()) {
+            int sizeIndex = cursor.getColumnIndex(OpenableColumns.SIZE);
+            if (!cursor.isNull(sizeIndex)) {
+                long sizeInBytes = cursor.getLong(sizeIndex);
+                result = formatFileSize(sizeInBytes);
+            }
+            cursor.close();
+        }
+        return result;
+    }
+
+    private String formatFileSize(long sizeInBytes) {
+        double size = sizeInBytes;
+        String unit;
+        if (sizeInBytes >= 1024L * 1024L * 1024L) {
+            size = size / (1024.0 * 1024.0 * 1024.0);
+            unit = "GB";
+        } else if (sizeInBytes >= 1024L * 1024L) {
+            size = size / (1024.0 * 1024.0);
+            unit = "MB";
+        } else {
+            size = size / 1024.0;
+            unit = "KB";
+        }
+        return String.format(Locale.getDefault(), "%.2f %s", size, unit);
+    }
+
 
     private void startServer() {
-
         if(SERVER_RUNNING) {
             Toast.makeText(MainActivity.this, "Stopping server", Toast.LENGTH_SHORT).show();
             // do the chores
@@ -190,23 +223,12 @@ public class MainActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         switch (item.getItemId()) {
             case R.id.action_history:
-                //
-                List<History> fileList = new ArrayList<>();
-                fileList.add(new History("Document.pdf", "12 MB", "31-August-2025", R.drawable.ic_file_unknown));
-                fileList.add(new History("Photo.jpg", "5.2 MB", "31-August-2025", R.drawable.ic_file_unknown));
-                fileList.add(new History("Document.pdf", "12 MB", "31-August-2025", R.drawable.ic_file_unknown));
-                fileList.add(new History("Photo.jpg", "5.2 MB", "31-August-2025", R.drawable.ic_file_unknown));
-                fileList.add(new History("Document.pdf", "12 MB", "31-August-2025", R.drawable.ic_file_unknown));
-                fileList.add(new History("Photo.jpg", "5.2 MB", "31-August-2025", R.drawable.ic_file_unknown));
-                fileList.add(new History("Document.pdf", "12 MB", "31-August-2025", R.drawable.ic_file_unknown));
-                fileList.add(new History("Photo.jpg", "5.2 MB", "31-August-2025", R.drawable.ic_file_unknown));
-                fileList.add(new History("Document.pdf", "12 MB", "31-August-2025", R.drawable.ic_file_unknown));
-                fileList.add(new History("Photo.jpg", "5.2 MB", "31-August-2025", R.drawable.ic_file_unknown));
-                fileList.add(new History("Document.pdf", "12 MB", "31-August-2025", R.drawable.ic_file_unknown));
-
-
-                HistoryBottomSheet bottomSheet = new HistoryBottomSheet(fileList);
-                bottomSheet.show(getSupportFragmentManager(), bottomSheet.getTag());
+                historyViewModel.getAllHistory().observe(this, historyList -> {
+                    BottomSheet bottomSheet = new BottomSheet(historyList, history -> {
+                        historyViewModel.delete(history);
+                    });
+                    bottomSheet.show(getSupportFragmentManager(), bottomSheet.getTag());
+                });
 
             default:
                 return super.onOptionsItemSelected(item);

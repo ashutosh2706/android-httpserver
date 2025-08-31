@@ -1,4 +1,4 @@
-package com.android.httpserver;
+package com.android.httpserver.component;
 
 import android.view.LayoutInflater;
 import android.view.View;
@@ -10,16 +10,28 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.android.httpserver.R;
 import com.android.httpserver.model.History;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class HistoryAdapter extends RecyclerView.Adapter<HistoryAdapter.ViewHolder> {
 
-    private List<History> historyList;
+    public interface OnDeleteClickListener {
+        void onDeleteClick(History history);
+    }
 
-    public HistoryAdapter(List<History> historyList) {
+    private List<History> historyList = new ArrayList<>();
+    private final OnDeleteClickListener listener;
+
+    public HistoryAdapter(OnDeleteClickListener listener) {
+        this.listener = listener;
+    }
+
+    public void setHistoryList(List<History> historyList) {
         this.historyList = historyList;
+        notifyDataSetChanged();
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
@@ -29,7 +41,7 @@ public class HistoryAdapter extends RecyclerView.Adapter<HistoryAdapter.ViewHold
 
         public ViewHolder(View itemView) {
             super(itemView);
-            imageView = itemView.findViewById(R.id.imageView);
+            imageView = itemView.findViewById(R.id.imageViewThumb);
             fileNameTextView = itemView.findViewById(R.id.fileNameTextView);
             fileSizeTextView = itemView.findViewById(R.id.fileSizeTextView);
             subtitleTextView = itemView.findViewById(R.id.subtitleTextView);
@@ -52,9 +64,7 @@ public class HistoryAdapter extends RecyclerView.Adapter<HistoryAdapter.ViewHold
         holder.fileSizeTextView.setText(item.getFileSize());
         holder.subtitleTextView.setText(item.getExtra());
         holder.imageView.setImageResource(item.getImageResId());
-        holder.actionButton.setOnClickListener(v -> {
-            // Do something
-        });
+        holder.actionButton.setOnClickListener(v -> listener.onDeleteClick(item));
     }
 
     @Override

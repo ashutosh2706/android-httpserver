@@ -23,6 +23,7 @@
                 android:layout_height="match_parent"
                 android:id="@+id/history_icon"
                 android:src="@drawable/ic_history"
+                app:tint="@color/black"
                 android:layout_marginEnd="5dp"
                 android:gravity="center"/>
 
@@ -31,6 +32,7 @@
                 android:layout_height="wrap_content"
                 android:text="History"
                 android:gravity="center"
+                android:textColor="@color/black"
                 android:paddingVertical="5dp"
                 android:textStyle="bold"
                 android:textSize="18sp" />

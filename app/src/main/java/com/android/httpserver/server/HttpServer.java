@@ -6,7 +6,10 @@ import android.content.ContentResolver;
 import android.content.Context;
 import android.net.Uri;
 
+import com.android.httpserver.R;
+import com.android.httpserver.component.HistoryViewModel;
 import com.android.httpserver.model.FileInfo;
+import com.android.httpserver.model.History;
 import com.android.httpserver.response.BadRequest;
 import com.android.httpserver.response.InternalServerError;
 import com.android.httpserver.response.NoContent;
@@ -22,8 +25,11 @@ import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.nio.charset.StandardCharsets;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Enumeration;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import fi.iki.elonen.NanoHTTPD;
@@ -32,11 +38,13 @@ public class HttpServer extends NanoHTTPD {
 
     private Context context;
     private final ContentResolver contentResolver;
+    private HistoryViewModel historyViewModel;
 
-    public HttpServer(Context context, int port, ContentResolver contentResolver) {
+    public HttpServer(Context context, int port, ContentResolver contentResolver, HistoryViewModel historyViewModel) {
         super(port);
         this.context = context;
         this.contentResolver = contentResolver;
+        this.historyViewModel = historyViewModel;
     }
 
     @Override
@@ -112,13 +120,16 @@ public class HttpServer extends NanoHTTPD {
 
             Uri fileUri = null;
             String idFromMap = "", fileName = "download_file";
+            String fileSize = "";
             for(Map.Entry<String, FileInfo> infoEntry: fileMap.entrySet()) {
                 fileUri = infoEntry.getValue().getUri();
                 fileName = infoEntry.getValue().getFileName();
                 idFromMap = infoEntry.getKey();
+                fileSize = infoEntry.getValue().getFileSize();
             }
 
             if(fileUri != null && idFromMap.equals(id)) {
+
                 try {
                     InputStream inputStream = contentResolver.openInputStream(fileUri);
                     String mimeType = contentResolver.getType(fileUri);
@@ -127,6 +138,7 @@ public class HttpServer extends NanoHTTPD {
                     }
                     // remove entry from map
                     fileMap.clear();
+                    saveHistory(fileName, fileSize, mimeType);
                     // Response response = newChunkedResponse(Response.Status.OK, mimeType, inputStream);
                     Response response = new Accept(null, mimeType).build(inputStream);
                     response.addHeader("Content-Disposition", "attachment; filename=\"" + fileName + "\"");
@@ -142,6 +154,27 @@ public class HttpServer extends NanoHTTPD {
 
         String errorMsg = "Path: " + uri + " was not found";
         return new NotFound("404 NOT FOUND: "+errorMsg, MimeTypes.TEXT_HTML).build(notFoundStream);
+    }
+
+    private void saveHistory(String fileName, String fileSize, String mimeType) {
+        int resId = -1;
+        if(mimeType.equals(MimeTypes.TEXT_HTML) || mimeType.equals(MimeTypes.TEXT_PLAIN) || mimeType.equals(MimeTypes.TEXT_XML) || mimeType.equals(MimeTypes.APPLICATION_JSON)) {
+            resId = R.drawable.ic_file_plain;
+        } else if (mimeType.equals(MimeTypes.IMAGE_JPEG) || mimeType.equals(MimeTypes.IMAGE_PNG) || mimeType.equals(MimeTypes.IMAGE_GIF)) {
+            resId = R.drawable.ic_file_image;
+        } else if(mimeType.equals(MimeTypes.AUDIO_MPEG) || mimeType.equals(MimeTypes.AUDIO_WAV) || mimeType.equals(MimeTypes.AUDIO_OGG)) {
+            resId = R.drawable.ic_file_audio;
+        } else if(mimeType.equals(MimeTypes.VIDEO_MP4) || mimeType.equals(MimeTypes.VIDEO_MPEG) || mimeType.equals(MimeTypes.VIDEO_WEBM)) {
+            resId = R.drawable.ic_file_video;
+        } else if(mimeType.equals(MimeTypes.ANDROID_PACKAGE)) {
+            resId = R.drawable.ic_file_android_package;
+        } else {
+            resId = R.drawable.ic_file_unknown;
+        }
+
+        String date = new SimpleDateFormat("dd MMM yyyy", Locale.ENGLISH).format(new Date());
+        History history = new History(fileName, fileSize, date, resId);
+        this.historyViewModel.insert(history);
     }
 
 

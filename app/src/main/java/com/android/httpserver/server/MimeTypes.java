@@ -52,4 +52,5 @@ public final class MimeTypes {
     // Other
     public static final String APPLICATION_PDF = "application/pdf";
     public static final String APPLICATION_ZIP = "application/zip";
+    public static final String ANDROID_PACKAGE = "application/vnd.android.package-archive";
 }
