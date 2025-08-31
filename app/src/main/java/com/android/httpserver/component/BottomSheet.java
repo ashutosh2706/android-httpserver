@@ -36,7 +36,6 @@ public class BottomSheet extends BottomSheetDialogFragment {
 
         recyclerView = view.findViewById(R.id.recyclerView);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-        // how do i initialize it here ??
         HistoryAdapter adapter = new HistoryAdapter(deleteClickListener);
         adapter.setHistoryList(historyList);
         recyclerView.setAdapter(adapter);

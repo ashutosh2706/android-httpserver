@@ -21,7 +21,7 @@
         <TextView
             android:id="@+id/file_name"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="42dp"
             android:layout_weight="1"
             android:text=""
             android:hint="@string/choose_file"
@@ -37,8 +37,10 @@
         <Button
             android:id="@+id/picker_btn"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_height="42dp"
             android:text="@string/select"
+            android:background="@drawable/active_file_picker_btn_bg"
+            android:textColor="@color/white"
             android:layout_marginStart="6dp" />
     </LinearLayout>
 
@@ -63,7 +65,8 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:text="@string/ip"
-        android:textSize="16sp"
+        android:fontFamily="monospace"
+        android:textSize="17sp"
         android:gravity="center"
         android:textColor="@android:color/black"
         android:paddingVertical="25dp"
@@ -74,10 +77,11 @@
 
     <Button
         android:id="@+id/server_btn"
-        android:layout_width="wrap_content"
+        android:layout_width="150dp"
         android:layout_height="wrap_content"
         android:text="@string/start_server"
-        android:background="@drawable/button_back"
+        android:textColor="@color/white"
+        android:background="@drawable/start_server_btn_bg"
         app:layout_constraintTop_toBottomOf="@id/ip_view"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"

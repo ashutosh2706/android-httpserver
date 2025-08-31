@@ -66,6 +66,10 @@ public class MainActivity extends AppCompatActivity {
         filePickerBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                if(SERVER_RUNNING) {
+                    Toast.makeText(MainActivity.this, "Server running", Toast.LENGTH_SHORT).show();
+                    return;
+                }
                 Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
                 intent.addCategory(Intent.CATEGORY_OPENABLE);
                 intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
@@ -174,6 +178,8 @@ public class MainActivity extends AppCompatActivity {
             fileMap.clear();
             fileNameView.setText("");
             startServerBtn.setText("Start Server");
+            startServerBtn.setBackgroundResource(R.drawable.start_server_btn_bg);
+            filePickerBtn.setBackgroundResource(R.drawable.active_file_picker_btn_bg);
             Toast.makeText(MainActivity.this, "Server stopped", Toast.LENGTH_SHORT).show();
             return;
         }
@@ -202,14 +208,20 @@ public class MainActivity extends AppCompatActivity {
                 }
                 SERVER_RUNNING = true;
                 startServerBtn.setText("Stop Server");
+                startServerBtn.setBackgroundResource(R.drawable.stop_server_btn_bg);
+                filePickerBtn.setBackgroundResource(R.drawable.inactive_file_picker_btn_bg);
                 Toast.makeText(MainActivity.this, "Server started successfully on port: " + PORT, Toast.LENGTH_SHORT).show();
             } catch (Exception e) {
-                e.printStackTrace();
+                Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
                 ipView.setText("Failed to start server");
+                SERVER_RUNNING = false;
+                startServerBtn.setText("Start Server");
+                startServerBtn.setBackgroundResource(R.drawable.start_server_btn_bg);
+                filePickerBtn.setBackgroundResource(R.drawable.active_file_picker_btn_bg);
             }
 
         } else {
-            ipView.setText("Can't retrieve device IP.");
+            ipView.setText("Can't retrieve device IP. Make sure WIFI or Hotspot is turned on");
         }
     }
 
@@ -224,10 +236,13 @@ public class MainActivity extends AppCompatActivity {
         switch (item.getItemId()) {
             case R.id.action_history:
                 historyViewModel.getAllHistory().observe(this, historyList -> {
-                    BottomSheet bottomSheet = new BottomSheet(historyList, history -> {
-                        historyViewModel.delete(history);
-                    });
-                    bottomSheet.show(getSupportFragmentManager(), bottomSheet.getTag());
+                    if (getSupportFragmentManager().findFragmentByTag("BottomSheetTag") == null) {
+                        BottomSheet bottomSheet = new BottomSheet(historyList, history -> {
+                            historyViewModel.delete(history);
+                            Toast.makeText(MainActivity.this, "History deleted", Toast.LENGTH_SHORT).show();
+                        });
+                        bottomSheet.show(getSupportFragmentManager(), "BottomSheetTag");
+                    }
                 });
 
             default:

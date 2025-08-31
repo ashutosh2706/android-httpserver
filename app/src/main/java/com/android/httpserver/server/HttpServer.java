@@ -100,7 +100,6 @@ public class HttpServer extends NanoHTTPD {
                 return new NoContent("Requested resource is not available", MimeTypes.TEXT_HTML).build(noContentStream);
 
             } catch (IOException e) {
-                // 500 error
                 return new InternalServerError(e.getMessage(), MimeTypes.TEXT_PLAIN).build(serverErrorStream, e.getClass().getSimpleName());
             }
         }

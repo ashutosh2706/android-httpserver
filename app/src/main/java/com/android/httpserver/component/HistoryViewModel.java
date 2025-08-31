@@ -36,7 +36,6 @@ public class HistoryViewModel extends AndroidViewModel {
     }
 
     public void delete(History history) {
-        System.out.println(history.getFileName() + " request to delete");
-//        executorService.execute(() -> historyDao.delete(history));
+        executorService.execute(() -> historyDao.delete(history));
     }
 }
