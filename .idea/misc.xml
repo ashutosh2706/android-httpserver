@@ -5,8 +5,11 @@
       <map>
         <entry key="..\:/Users/Ashutosh/AndroidStudioProjects/HttpServer/app/src/main/res/layout/activity_main.xml" value="0.2296875" />
         <entry key="..\:/Workspace/AndroidProjects/HttpServer/app/src/main/res/drawable/button_back.xml" value="0.2703125" />
+        <entry key="..\:/Workspace/AndroidProjects/HttpServer/app/src/main/res/drawable/ic_bin.xml" value="0.2703125" />
         <entry key="..\:/Workspace/AndroidProjects/HttpServer/app/src/main/res/drawable/tv_border.xml" value="0.2703125" />
         <entry key="..\:/Workspace/AndroidProjects/HttpServer/app/src/main/res/layout/activity_main.xml" value="0.24010416666666667" />
+        <entry key="..\:/Workspace/AndroidProjects/HttpServer/app/src/main/res/layout/bottom_sheet.xml" value="0.1" />
+        <entry key="..\:/Workspace/AndroidProjects/HttpServer/app/src/main/res/layout/recycler_item.xml" value="0.25416666666666665" />
       </map>
     </option>
   </component>
