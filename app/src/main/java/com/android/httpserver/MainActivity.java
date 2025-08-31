@@ -1,5 +1,6 @@
 package com.android.httpserver;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -10,6 +11,8 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.OpenableColumns;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
@@ -17,9 +20,12 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.android.httpserver.model.FileInfo;
+import com.android.httpserver.model.History;
 import com.android.httpserver.server.HttpServer;
 import com.android.httpserver.util.QRGen;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.UUID;
 import java.time.LocalDateTime;
@@ -171,6 +177,39 @@ public class MainActivity extends AppCompatActivity {
 
         } else {
             ipView.setText("Can't retrieve device IP.");
+        }
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.action_history:
+                //
+                List<History> fileList = new ArrayList<>();
+                fileList.add(new History("Document.pdf", "12 MB", "31-August-2025", R.drawable.ic_file_unknown));
+                fileList.add(new History("Photo.jpg", "5.2 MB", "31-August-2025", R.drawable.ic_file_unknown));
+                fileList.add(new History("Document.pdf", "12 MB", "31-August-2025", R.drawable.ic_file_unknown));
+                fileList.add(new History("Photo.jpg", "5.2 MB", "31-August-2025", R.drawable.ic_file_unknown));
+                fileList.add(new History("Document.pdf", "12 MB", "31-August-2025", R.drawable.ic_file_unknown));
+                fileList.add(new History("Photo.jpg", "5.2 MB", "31-August-2025", R.drawable.ic_file_unknown));
+                fileList.add(new History("Document.pdf", "12 MB", "31-August-2025", R.drawable.ic_file_unknown));
+                fileList.add(new History("Photo.jpg", "5.2 MB", "31-August-2025", R.drawable.ic_file_unknown));
+                fileList.add(new History("Document.pdf", "12 MB", "31-August-2025", R.drawable.ic_file_unknown));
+                fileList.add(new History("Photo.jpg", "5.2 MB", "31-August-2025", R.drawable.ic_file_unknown));
+                fileList.add(new History("Document.pdf", "12 MB", "31-August-2025", R.drawable.ic_file_unknown));
+
+
+                HistoryBottomSheet bottomSheet = new HistoryBottomSheet(fileList);
+                bottomSheet.show(getSupportFragmentManager(), bottomSheet.getTag());
+
+            default:
+                return super.onOptionsItemSelected(item);
         }
     }
 
