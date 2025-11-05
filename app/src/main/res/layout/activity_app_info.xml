@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/layout_about_app"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center_horizontal"
+    android:paddingVertical="45dp"
+    android:paddingHorizontal="24dp"
+    android:background="@android:color/white"
+    tools:context=".AppInfo">
+
+    <androidx.cardview.widget.CardView
+        android:id="@+id/ivAppIconCard"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:layout_marginVertical="12dp"
+        app:cardCornerRadius="20dp"
+        app:cardElevation="2dp">
+
+        <ImageView
+            android:id="@+id/ivAppIcon"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:src="@mipmap/ic_launcher"
+            android:contentDescription="@string/app_icon" />
+
+    </androidx.cardview.widget.CardView>
+
+    <TextView
+        android:id="@+id/tvAppName"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/app_name"
+        android:textSize="22sp"
+        android:textStyle="bold"
+        android:textColor="@android:color/black"
+        android:layout_marginBottom="4dp" />
+
+    <TextView
+        android:id="@+id/tvAppVersion"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/version"
+        android:textColor="@android:color/darker_gray"
+        android:textSize="14sp"
+        android:layout_marginBottom="28dp" />
+
+
+    <androidx.cardview.widget.CardView
+        android:id="@+id/cardDeveloper"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:cardCornerRadius="12dp"
+        app:cardElevation="2dp"
+        android:layout_marginHorizontal="8dp"
+        android:layout_marginBottom="24dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingVertical="16dp">
+
+            <TextView
+                android:layout_height="wrap_content"
+                android:layout_width="match_parent"
+                android:textAlignment="center"
+                android:paddingVertical="5sp"
+                android:text="@string/made_with_by"
+                android:textStyle="bold"
+                android:textColor="@android:color/black"
+                android:textSize="18sp" />
+
+            <TextView
+                android:id="@+id/tvDeveloperName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textAlignment="center"
+                android:text="@string/ashutosh_mishra"
+                android:textColor="@color/black"
+                android:textSize="16sp"
+                android:paddingVertical="2sp"
+                android:layout_marginTop="4dp" />
+
+            <TextView
+                android:id="@+id/tvDeveloperEmail"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingVertical="2sp"
+                android:textAlignment="center"
+                android:text="@string/github_com_ashutosh2706"
+                android:textSize="15sp"
+                android:textColor="@android:color/darker_gray"
+                android:layout_marginTop="2dp" />
+        </LinearLayout>
+    </androidx.cardview.widget.CardView>
+
+    <Button
+        android:id="@+id/btnReportBug"
+        android:layout_width="200dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="30dp"
+        android:layout_marginBottom="12dp"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:background="@drawable/bug_btn_bg"
+        android:text="@string/report_bug"
+        android:textSize="18sp"
+        android:fontFamily="sans-serif"
+        android:textColor="@color/black"
+        android:drawableStart="@drawable/ic_bug_report"
+        android:drawableTint="@color/black"
+        android:drawablePadding="8dp" />
+
+</LinearLayout>

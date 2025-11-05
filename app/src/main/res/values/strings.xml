@@ -10,4 +10,12 @@
     <string name="_0b">0B</string>
     <string name="empty_date">--/--/--</string>
     <string name="delete_item">Delete item</string>
+    <string name="made_with_by">Developed with 🧠 By</string>
+    <string name="ashutosh_mishra">Ashutosh Mishra</string>
+    <string name="github_com_ashutosh2706">github.com/ashutosh2706</string>
+    <string name="report_bug">Report Bug</string>
+    <string name="app_icon">App Icon</string>
+    <string name="app_info">App Info</string>
+    <string name="menu">Menu</string>
+    <string name="version">Version</string>
 </resources>
