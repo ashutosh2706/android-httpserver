@@ -244,6 +244,12 @@ public class MainActivity extends AppCompatActivity {
                         bottomSheet.show(getSupportFragmentManager(), "BottomSheetTag");
                     }
                 });
+                return true;
+
+
+            case R.id.action_info:
+                startActivity(new Intent(MainActivity.this, AppInfo.class));
+                return true;
 
             default:
                 return super.onOptionsItemSelected(item);
