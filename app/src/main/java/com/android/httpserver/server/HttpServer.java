@@ -15,6 +15,7 @@ import com.android.httpserver.response.InternalServerError;
 import com.android.httpserver.response.NoContent;
 import com.android.httpserver.response.NotFound;
 import com.android.httpserver.response.Accept;
+import com.android.httpserver.util.NotificationHelper;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -39,12 +40,14 @@ public class HttpServer extends NanoHTTPD {
     private Context context;
     private final ContentResolver contentResolver;
     private HistoryViewModel historyViewModel;
+    private NotificationHelper notificationHelper;
 
-    public HttpServer(Context context, int port, ContentResolver contentResolver, HistoryViewModel historyViewModel) {
+    public HttpServer(Context context, int port, ContentResolver contentResolver, HistoryViewModel historyViewModel, NotificationHelper notificationHelper) {
         super(port);
         this.context = context;
         this.contentResolver = contentResolver;
         this.historyViewModel = historyViewModel;
+        this.notificationHelper = notificationHelper;
     }
 
     @Override
@@ -66,7 +69,7 @@ public class HttpServer extends NanoHTTPD {
             return new InternalServerError(e.getMessage(), MimeTypes.TEXT_PLAIN).build();
         }
 
-        if(Method.GET.equals(method) && "/".equals(uri)) {
+        if(Method.GET.equals(method) && RequestPath.ROOT.equals(uri)) {
 
             if(fileMap.isEmpty()) {
                 return new NoContent("Requested resource is not available", MimeTypes.TEXT_HTML).build(noContentStream);
@@ -91,7 +94,7 @@ public class HttpServer extends NanoHTTPD {
 
                 if(fileInfo != null && uid.length() > 0) {
                     String fileName = fileInfo.getFileName();
-                    String downloadUrl = "/download?id=" + uid;
+                    String downloadUrl = RequestPath.DOWNLOAD+"?id="+uid;
                     html = html.replace("{{filename}}", fileName);
                     html = html.replace("{{url}}", downloadUrl);
                     return new Accept(html, MimeTypes.TEXT_HTML).build();
@@ -103,7 +106,8 @@ public class HttpServer extends NanoHTTPD {
                 return new InternalServerError(e.getMessage(), MimeTypes.TEXT_PLAIN).build(serverErrorStream, e.getClass().getSimpleName());
             }
         }
-        if(Method.GET.equals(method) && "/download".equals(uri)) {
+
+        if(Method.GET.equals(method) && RequestPath.DOWNLOAD.equals(uri)) {
             Map<String, List<String>> params = session.getParameters();
             List<String> ids = params.get("id");
 
@@ -137,6 +141,7 @@ public class HttpServer extends NanoHTTPD {
                     }
                     // remove entry from map
                     fileMap.clear();
+                    notificationHelper.notifyDownloadStartedDefault(fileName);
                     saveHistory(fileName, fileSize, mimeType);
                     Response response = new Accept(null, mimeType).build(inputStream);
                     response.addHeader("Content-Disposition", "attachment; filename=\"" + fileName + "\"");
