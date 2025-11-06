@@ -24,6 +24,7 @@ import com.android.httpserver.component.BottomSheet;
 import com.android.httpserver.component.HistoryViewModel;
 import com.android.httpserver.model.FileInfo;
 import com.android.httpserver.server.HttpServer;
+import com.android.httpserver.util.NotificationHelper;
 import com.android.httpserver.util.QRGen;
 
 import java.util.Locale;
@@ -43,27 +44,28 @@ public class MainActivity extends AppCompatActivity {
     public static ConcurrentHashMap<String, FileInfo> fileMap;
     private static boolean SERVER_RUNNING = false;
     private HistoryViewModel historyViewModel;
+    NotificationHelper notificationHelper;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        filePickerBtn = findViewById(R.id.picker_btn);
+//        filePickerBtn = findViewById(R.id.picker_btn);
         startServerBtn = findViewById(R.id.server_btn);
         fileNameView = findViewById(R.id.file_name);
         ipView = findViewById(R.id.ip_view);
         qrView = findViewById(R.id.qr_view);
         historyViewModel = new ViewModelProvider(this, ViewModelProvider.AndroidViewModelFactory.getInstance(getApplication())).get(HistoryViewModel.class);
-
+        notificationHelper = new NotificationHelper(MainActivity.this);
         ipView.setText("");
         qrView.setImageDrawable(null);
 
-        httpServer = new HttpServer(MainActivity.this, PORT, getContentResolver(), historyViewModel);
+        httpServer = new HttpServer(MainActivity.this, PORT, getContentResolver(), historyViewModel, notificationHelper);
 
         fileMap = new ConcurrentHashMap<>();
 
-        filePickerBtn.setOnClickListener(new View.OnClickListener() {
+        fileNameView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 if(SERVER_RUNNING) {
@@ -179,7 +181,7 @@ public class MainActivity extends AppCompatActivity {
             fileNameView.setText("");
             startServerBtn.setText("Start Server");
             startServerBtn.setBackgroundResource(R.drawable.start_server_btn_bg);
-            filePickerBtn.setBackgroundResource(R.drawable.active_file_picker_btn_bg);
+//            filePickerBtn.setBackgroundResource(R.drawable.active_file_picker_btn_bg);
             Toast.makeText(MainActivity.this, "Server stopped", Toast.LENGTH_SHORT).show();
             return;
         }
@@ -209,7 +211,7 @@ public class MainActivity extends AppCompatActivity {
                 SERVER_RUNNING = true;
                 startServerBtn.setText("Stop Server");
                 startServerBtn.setBackgroundResource(R.drawable.stop_server_btn_bg);
-                filePickerBtn.setBackgroundResource(R.drawable.inactive_file_picker_btn_bg);
+//                filePickerBtn.setBackgroundResource(R.drawable.inactive_file_picker_btn_bg);
                 Toast.makeText(MainActivity.this, "Server started successfully on port: " + PORT, Toast.LENGTH_SHORT).show();
             } catch (Exception e) {
                 Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
@@ -217,7 +219,7 @@ public class MainActivity extends AppCompatActivity {
                 SERVER_RUNNING = false;
                 startServerBtn.setText("Start Server");
                 startServerBtn.setBackgroundResource(R.drawable.start_server_btn_bg);
-                filePickerBtn.setBackgroundResource(R.drawable.active_file_picker_btn_bg);
+//                filePickerBtn.setBackgroundResource(R.drawable.active_file_picker_btn_bg);
             }
 
         } else {

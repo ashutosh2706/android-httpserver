@@ -22,7 +22,7 @@
         <TextView
             android:id="@+id/file_name"
             android:layout_width="0dp"
-            android:layout_height="42dp"
+            android:layout_height="50dp"
             android:layout_weight="1"
             android:text=""
             android:hint="@string/choose_file"
@@ -40,6 +40,7 @@
             android:layout_width="wrap_content"
             android:layout_height="42dp"
             android:text="@string/select"
+            android:visibility="gone"
             android:background="@drawable/active_file_picker_btn_bg"
             android:textColor="@color/white"
             android:layout_marginStart="6dp" />
@@ -53,7 +54,7 @@
         android:layout_marginBottom="8dp"
         android:scaleType="fitCenter"
         android:adjustViewBounds="true"
-        android:src="@drawable/ic_launcher_foreground"
+        android:src="@drawable/ic_round_wifi"
         app:layout_constraintTop_toBottomOf="@id/picker"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
@@ -78,8 +79,9 @@
 
     <Button
         android:id="@+id/server_btn"
-        android:layout_width="150dp"
+        android:layout_width="170dp"
         android:layout_height="wrap_content"
+        android:textSize="16sp"
         android:text="@string/start_server"
         android:textColor="@color/white"
         android:background="@drawable/start_server_btn_bg"
