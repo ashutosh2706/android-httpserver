@@ -8,7 +8,7 @@ public class NotFound implements NanoHttpResponse {
 
     private final String content;
     private final String mimeType;
-    private final String code = "404 NOT FOUND: ";
+    private final String code = "404 NOT FOUND";
 
     public NotFound(String mimeType, String content) {
         this.mimeType = mimeType;
@@ -21,7 +21,7 @@ public class NotFound implements NanoHttpResponse {
         return NanoHTTPD.newFixedLengthResponse(
                 NanoHTTPD.Response.Status.OK,
                 mimeType,
-                code+content
+                code
         );
     }
 

@@ -8,7 +8,7 @@ public class NoContent implements NanoHttpResponse {
 
     private final String content;
     private final String mimeType;
-    private final String code = "204 NO CONTENT: ";
+    private final String code = "204 NO CONTENT";
 
     public NoContent(String content, String mimeType) {
         this.mimeType = mimeType;
@@ -20,7 +20,7 @@ public class NoContent implements NanoHttpResponse {
         return NanoHTTPD.newFixedLengthResponse(
                 NanoHTTPD.Response.Status.OK,
                 mimeType,
-                code+content
+                code
         );
     }
 
