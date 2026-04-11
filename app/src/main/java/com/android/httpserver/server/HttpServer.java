@@ -1,15 +1,23 @@
 package com.android.httpserver.server;
 
+import static android.content.ContentValues.TAG;
 import static com.android.httpserver.MainActivity.fileMap;
 
 import android.content.ContentResolver;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.net.Uri;
+import android.util.Log;
 
+import androidx.documentfile.provider.DocumentFile;
+
+import com.android.httpserver.Constants;
+import com.android.httpserver.MainActivity;
 import com.android.httpserver.R;
 import com.android.httpserver.component.HistoryViewModel;
 import com.android.httpserver.model.FileInfo;
 import com.android.httpserver.model.History;
+import com.android.httpserver.response.AcceptPost;
 import com.android.httpserver.response.BadRequest;
 import com.android.httpserver.response.InternalServerError;
 import com.android.httpserver.response.NoContent;
@@ -18,9 +26,12 @@ import com.android.httpserver.response.Accept;
 import com.android.httpserver.util.NotificationHelper;
 
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
@@ -29,20 +40,22 @@ import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
 import fi.iki.elonen.NanoHTTPD;
 
-public class HttpServer extends NanoHTTPD {
+public final class HttpServer extends NanoHTTPD {
 
     private Context context;
     private final ContentResolver contentResolver;
     private HistoryViewModel historyViewModel;
     private NotificationHelper notificationHelper;
+    private static HttpServer INSTANCE;
 
-    public HttpServer(Context context, int port, ContentResolver contentResolver, HistoryViewModel historyViewModel, NotificationHelper notificationHelper) {
+    private HttpServer(Context context, int port, ContentResolver contentResolver, HistoryViewModel historyViewModel, NotificationHelper notificationHelper) {
         super(port);
         this.context = context;
         this.contentResolver = contentResolver;
@@ -50,33 +63,56 @@ public class HttpServer extends NanoHTTPD {
         this.notificationHelper = notificationHelper;
     }
 
+    public static HttpServer getInstance(Context context, int port, ContentResolver contentResolver, HistoryViewModel historyViewModel, NotificationHelper notificationHelper) {
+        if (INSTANCE == null) {
+            INSTANCE = new HttpServer(
+                    context,
+                    port,
+                    contentResolver,
+                    historyViewModel,
+                    notificationHelper
+            );
+        }
+        return INSTANCE;
+    }
+
+
     @Override
     public Response serve(IHTTPSession session) {
         Method method = session.getMethod();
         String uri = session.getUri().substring(0, session.getUri().lastIndexOf('/')+1);
-        // load the assets
+
         InputStream notFoundStream = null;
         InputStream noContentStream = null;
         InputStream serverErrorStream = null;
         InputStream badRequestStream = null;
+        InputStream okStream = null;
+        InputStream okPostStream =  null;
 
         try {
-            notFoundStream = context.getAssets().open("404.html");
-            noContentStream = context.getAssets().open("204.html");
-            serverErrorStream = context.getAssets().open("500.html");
-            badRequestStream = context.getAssets().open("400.html");
+            okStream = context.getAssets().open("200");
+            okPostStream = context.getAssets().open("post");
+            notFoundStream = context.getAssets().open("404");
+            noContentStream = context.getAssets().open("204");
+            serverErrorStream = context.getAssets().open("500");
+            badRequestStream = context.getAssets().open("400");
         } catch (IOException e) {
             return new InternalServerError(e.getMessage(), MimeTypes.TEXT_PLAIN).build();
         }
 
         if(Method.GET.equals(method) && RequestPath.ROOT.equals(uri)) {
 
-            if(fileMap.isEmpty()) {
+            if(fileMap.isEmpty() && !MainActivity.RECEIVE_MODE) {
                 return new NoContent("Requested resource is not available", MimeTypes.TEXT_HTML).build(noContentStream);
             }
 
             try {
-                InputStream okStream = context.getAssets().open("200.html");
+
+                if (MainActivity.RECEIVE_MODE) {
+                    String okPostStringStream = stringStream(okPostStream);
+                    return new AcceptPost(okPostStringStream, MimeTypes.TEXT_HTML).build();
+                }
+
                 BufferedReader reader = new BufferedReader(new InputStreamReader(okStream, StandardCharsets.UTF_8));
                 StringBuilder sb = new StringBuilder();
                 String line;
@@ -147,6 +183,60 @@ public class HttpServer extends NanoHTTPD {
                 return new NoContent("", MimeTypes.TEXT_HTML).build(noContentStream);
             }
         }
+
+        if (Method.POST.equals(method) && RequestPath.UPLOAD.equals(uri)) {
+
+            try {
+                Map<String, String> files = new HashMap<>();
+                session.parseBody(files);
+                Map<String, List<String>> params = session.getParameters();
+                String tempPath = files.get("file");
+                if (tempPath == null) {
+                    Log.e(TAG, ":$$: tempPath null");
+                    return null;
+                }
+                File uploadedFile = new File(tempPath);
+                SharedPreferences preferences = context.getSharedPreferences(Constants.SHARED_PREFERENCES, Context.MODE_PRIVATE);
+                String uriString = preferences.getString(Constants.KEY_EXT_PATH_URI, null);
+                if (uriString == null) {
+                    return newFixedLengthResponse(Response.Status.INTERNAL_ERROR, MimeTypes.TEXT_PLAIN, "ext_uri_null");
+                }
+
+                Uri locationUri = Uri.parse(uriString);
+                DocumentFile pickedDir=DocumentFile.fromTreeUri(context, locationUri);
+                String fileName = "unknown";
+                if (params.containsKey("file")) {
+                    fileName = params.get("file").get(0);
+                }
+
+                if (pickedDir == null) {
+                    return newFixedLengthResponse(Response.Status.INTERNAL_ERROR, MimeTypes.TEXT_PLAIN, "ext_uri_null");
+                }
+
+                DocumentFile newFile = pickedDir.createFile(
+                        MimeTypes.APPLICATION_OCTET_STREAM,
+                        fileName
+                );
+                try (
+                        InputStream in = new FileInputStream(uploadedFile);
+                        OutputStream out = context.getContentResolver().openOutputStream(newFile.getUri())
+                ) {
+                    byte[] buffer = new byte[8192];
+                    int len;
+                    while ((len = in.read(buffer)) > 0) {
+                        out.write(buffer, 0, len);
+                    }
+                }
+
+                saveHistory(fileName, "", MimeTypes.APPLICATION_OCTET_STREAM);
+                notificationHelper.notifyUploadCompletedDefault(fileName);
+                return newFixedLengthResponse(Response.Status.OK, MimeTypes.TEXT_PLAIN, "ok");
+
+            } catch (Exception e) {
+                return newFixedLengthResponse(Response.Status.INTERNAL_ERROR, MimeTypes.TEXT_PLAIN, e.getClass().getSimpleName());
+            }
+        }
+
         return new NotFound(MimeTypes.TEXT_HTML, "").build(notFoundStream);
     }
 
@@ -187,5 +277,16 @@ public class HttpServer extends NanoHTTPD {
             e.printStackTrace();
         }
         return null;
+    }
+
+    private String stringStream(InputStream inputStream) throws IOException {
+        BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
+        StringBuilder sb = new StringBuilder();
+        String line;
+        while ((line = reader.readLine()) != null) {
+            sb.append(line).append("\n");
+        }
+        reader.close();
+        return sb.toString();
     }
 }

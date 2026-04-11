@@ -38,8 +38,7 @@
 <body>
 <div class="card z-depth-3 white center-align">
     <div class="emoji">💥</div>
-    <h5 class="red-text text-darken-2">Server Error</h5>
-    <p class="grey-text text-darken-1">Oops! Something broke on our end.</p>
+    <h5 class="red-text text-darken-2">Internal Server Error</h5>
     <p>{{error_code}}</p>
 </div>
 

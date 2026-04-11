@@ -18,4 +18,5 @@
     <string name="app_info">App Info</string>
     <string name="menu">Menu</string>
     <string name="version">Version</string>
+    <string name="receive_file">Receive File</string>
 </resources>
