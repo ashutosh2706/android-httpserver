@@ -41,7 +41,6 @@ public class AppInfo extends AppCompatActivity {
             appVersionTView.setText("Version "+versionName);
         } catch (PackageManager.NameNotFoundException e) {
             Toast.makeText(AppInfo.this, e.getMessage(), Toast.LENGTH_LONG).show();
-            appVersionTView.setText("Version 1.0");
         }
     }
 

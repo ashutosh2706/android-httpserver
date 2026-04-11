@@ -34,7 +34,7 @@ import java.time.LocalDateTime;
 
 public class MainActivity extends AppCompatActivity {
 
-    public static final int PORT = 8080;
+    public static final int PORT = 8000;
     Button filePickerBtn, startServerBtn;
     TextView fileNameView, ipView;
     ImageView qrView;
@@ -45,6 +45,8 @@ public class MainActivity extends AppCompatActivity {
     private static boolean SERVER_RUNNING = false;
     private HistoryViewModel historyViewModel;
     NotificationHelper notificationHelper;
+
+    private final String noConnectionMessage = "Can't retrieve IP address. Check your network connection and try again";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -223,7 +225,7 @@ public class MainActivity extends AppCompatActivity {
             }
 
         } else {
-            ipView.setText("Can't retrieve device IP. Make sure WIFI or Hotspot is turned on");
+            ipView.setText(noConnectionMessage);
         }
     }
 

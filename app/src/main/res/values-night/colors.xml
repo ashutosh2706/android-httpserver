@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="primary">#FF6200EE</color>
+    <color name="primary">#171717</color>
     <color name="purple_500">#FF6200EE</color>
-    <color name="primaryVariant">#FF3700B3</color>
+    <color name="primaryVariant">#090909</color>
     <color name="secondary">#FF03DAC5</color>
     <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
-    <color name="layout_primary_background">#FFFFFF</color>
-    <color name="layout_primaryVariant_background">#FFFFFF</color>
-    <color name="text_primary_foreground">#FF000000</color>
+    <color name="layout_primary_background">#252525</color>
+    <color name="layout_primaryVariant_background">#454545</color>
+    <color name="text_primary_foreground">#FFFFFFFF</color>
 </resources>

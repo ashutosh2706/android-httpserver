@@ -16,6 +16,7 @@
         android:orientation="horizontal"
         android:paddingHorizontal="14dp"
         android:paddingVertical="8dp"
+        android:background="@color/layout_primaryVariant_background"
         android:gravity="center_vertical">
 
         <ImageView
@@ -47,7 +48,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:text="@string/unknown"
-                    android:textColor="@android:color/black"
+                    android:textColor="@color/text_primary_foreground"
                     android:textSize="16sp"
                     android:textStyle="bold"
                     android:maxLines="1"

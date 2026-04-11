@@ -53,7 +53,7 @@ public class HttpServer extends NanoHTTPD {
     @Override
     public Response serve(IHTTPSession session) {
         Method method = session.getMethod();
-        String uri = session.getUri();
+        String uri = session.getUri().substring(0, session.getUri().lastIndexOf('/')+1);
         // load the assets
         InputStream notFoundStream = null;
         InputStream noContentStream = null;
@@ -94,13 +94,13 @@ public class HttpServer extends NanoHTTPD {
 
                 if(fileInfo != null && uid.length() > 0) {
                     String fileName = fileInfo.getFileName();
-                    String downloadUrl = RequestPath.DOWNLOAD+"?id="+uid;
+                    String downloadUrl = RequestPath.DOWNLOAD+uid;
                     html = html.replace("{{filename}}", fileName);
                     html = html.replace("{{url}}", downloadUrl);
                     return new Accept(html, MimeTypes.TEXT_HTML).build();
                 }
 
-                return new NoContent("Requested resource is not available", MimeTypes.TEXT_HTML).build(noContentStream);
+                return new NoContent("", MimeTypes.TEXT_HTML).build(noContentStream);
 
             } catch (IOException e) {
                 return new InternalServerError(e.getMessage(), MimeTypes.TEXT_PLAIN).build(serverErrorStream, e.getClass().getSimpleName());
@@ -108,30 +108,23 @@ public class HttpServer extends NanoHTTPD {
         }
 
         if(Method.GET.equals(method) && RequestPath.DOWNLOAD.equals(uri)) {
-            Map<String, List<String>> params = session.getParameters();
-            List<String> ids = params.get("id");
+            String fileUId = session.getUri().substring(session.getUri().lastIndexOf('/')+1);
 
-            if(ids == null || ids.isEmpty()) {
-                return new BadRequest("Missing parameter id", MimeTypes.TEXT_PLAIN).build(badRequestStream);
+            if(fileUId.trim().isEmpty()) {
+                return new BadRequest("Missing fileUId", MimeTypes.TEXT_PLAIN).build(badRequestStream);
             }
 
-            String id=ids.get(0);
             // check if fileMap is not empty
-            if(fileMap.isEmpty()) {
-                return new NoContent("Requested resource is not available", MimeTypes.TEXT_HTML).build(noContentStream);
+            if(fileMap.isEmpty() || !fileMap.containsKey(fileUId.trim())) {
+                return new NotFound(MimeTypes.TEXT_HTML, "").build(notFoundStream);
             }
 
-            Uri fileUri = null;
-            String idFromMap = "", fileName = "unknown";
-            String fileSize = "";
-            for(Map.Entry<String, FileInfo> infoEntry: fileMap.entrySet()) {
-                fileUri = infoEntry.getValue().getUri();
-                fileName = infoEntry.getValue().getFileName();
-                idFromMap = infoEntry.getKey();
-                fileSize = infoEntry.getValue().getFileSize();
-            }
+            FileInfo info = fileMap.get(fileUId.trim());
+            Uri fileUri = info != null ? info.getUri() : null;
+            String fileName = info != null ? info.getFileName() : "unknown";
+            String fileSize = info != null ? info.getFileSize() : "0B";
 
-            if(fileUri != null && idFromMap.equals(id)) {
+            if(fileUri != null) {
 
                 try {
                     InputStream inputStream = contentResolver.openInputStream(fileUri);
@@ -151,12 +144,10 @@ public class HttpServer extends NanoHTTPD {
                 }
 
             } else {
-                return new NoContent("Requested resource is not available", MimeTypes.TEXT_HTML).build(noContentStream);
+                return new NoContent("", MimeTypes.TEXT_HTML).build(noContentStream);
             }
         }
-
-        String errorMsg = "Path: " + uri + " was not found";
-        return new NotFound(errorMsg, MimeTypes.TEXT_HTML).build(notFoundStream);
+        return new NotFound(MimeTypes.TEXT_HTML, "").build(notFoundStream);
     }
 
     private void saveHistory(String fileName, String fileSize, String mimeType) {
