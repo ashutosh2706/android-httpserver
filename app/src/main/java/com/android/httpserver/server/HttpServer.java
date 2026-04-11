@@ -1,13 +1,11 @@
 package com.android.httpserver.server;
 
-import static android.content.ContentValues.TAG;
 import static com.android.httpserver.MainActivity.fileMap;
 
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.net.Uri;
-import android.util.Log;
 
 import androidx.documentfile.provider.DocumentFile;
 
@@ -150,7 +148,6 @@ public final class HttpServer extends NanoHTTPD {
                 return new BadRequest("Missing fileUId", MimeTypes.TEXT_PLAIN).build(badRequestStream);
             }
 
-            // check if fileMap is not empty
             if(fileMap.isEmpty() || !fileMap.containsKey(fileUId.trim())) {
                 return new NotFound(MimeTypes.TEXT_HTML, "").build(notFoundStream);
             }
@@ -168,7 +165,7 @@ public final class HttpServer extends NanoHTTPD {
                     if(mimeType == null) {
                         mimeType = MimeTypes.APPLICATION_OCTET_STREAM;
                     }
-                    // remove entry from map
+
                     fileMap.clear();
                     notificationHelper.notifyDownloadStartedDefault(fileName);
                     saveHistory(fileName, fileSize, mimeType);
@@ -192,8 +189,7 @@ public final class HttpServer extends NanoHTTPD {
                 Map<String, List<String>> params = session.getParameters();
                 String tempPath = files.get("file");
                 if (tempPath == null) {
-                    Log.e(TAG, ":$$: tempPath null");
-                    return null;
+                    return newFixedLengthResponse(Response.Status.BAD_REQUEST, MimeTypes.TEXT_PLAIN, "No file provided");
                 }
                 File uploadedFile = new File(tempPath);
                 SharedPreferences preferences = context.getSharedPreferences(Constants.SHARED_PREFERENCES, Context.MODE_PRIVATE);
