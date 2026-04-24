@@ -11,21 +11,20 @@ import android.os.Build;
 
 import androidx.core.app.NotificationCompat;
 
+import com.android.httpserver.Constants;
 import com.android.httpserver.R;
 
 public class NotificationHelper {
 
     private Context context;
-    private static final String PREFS_NAME = "prefs";
-    private static final String KEY_FIRST_LAUNCH = "isFirstLaunch";
 
     public NotificationHelper(Context context) {
         this.context = context;
 
         if (isFirstLaunch()) {
-            SharedPreferences sharedPreferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+            SharedPreferences sharedPreferences = context.getSharedPreferences(Constants.SHARED_PREFERENCES, Context.MODE_PRIVATE);
             SharedPreferences.Editor editor = sharedPreferences.edit();
-            editor.putBoolean(KEY_FIRST_LAUNCH, false);
+            editor.putBoolean(Constants.KEY_FIRST_LAUNCH, false);
             editor.apply();
             showNoticeDialog();
         }
@@ -44,8 +43,8 @@ public class NotificationHelper {
     }
 
     private boolean isFirstLaunch() {
-        SharedPreferences sharedPreferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
-        return sharedPreferences.getBoolean(KEY_FIRST_LAUNCH, true);
+        SharedPreferences sharedPreferences = context.getSharedPreferences(Constants.SHARED_PREFERENCES, Context.MODE_PRIVATE);
+        return sharedPreferences.getBoolean(Constants.KEY_FIRST_LAUNCH, true);
     }
 
     private void showNoticeDialog() {
@@ -62,6 +61,17 @@ public class NotificationHelper {
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, NotificationChannelProperties.DEFAULT_DOWNLOAD_CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_language)
                 .setContentTitle("Download Started")
+                .setContentText(fileName)
+                .setPriority(NotificationCompat.PRIORITY_DEFAULT);
+
+        NotificationManager notificationManager = (NotificationManager) context.getSystemService(NOTIFICATION_SERVICE);
+        notificationManager.notify(1, builder.build());
+    }
+
+    public void notifyUploadCompletedDefault(String fileName) {
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(context, NotificationChannelProperties.DEFAULT_DOWNLOAD_CHANNEL_ID)
+                .setSmallIcon(R.drawable.ic_language)
+                .setContentTitle("File Received")
                 .setContentText(fileName)
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT);
 

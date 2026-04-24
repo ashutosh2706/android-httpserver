@@ -4,16 +4,15 @@ import java.io.InputStream;
 
 import fi.iki.elonen.NanoHTTPD;
 
-public class Accept implements NanoHttpResponse {
+public class AcceptPost implements NanoHttpResponse {
 
     private final String content;
     private final String mimeType;
 
-    public Accept(String content, String mimeType) {
+    public AcceptPost(String content, String mimeType) {
         this.content = content;
         this.mimeType = mimeType;
     }
-
 
     @Override
     public NanoHTTPD.Response build() {

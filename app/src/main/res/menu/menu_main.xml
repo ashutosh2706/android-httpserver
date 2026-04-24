@@ -10,6 +10,12 @@
         <menu>
 
             <item
+                android:id="@+id/action_file_receive"
+                android:title="@string/receive_file"
+                android:icon="@drawable/ic_download"
+                app:showAsAction="never" />
+
+            <item
                 android:id="@+id/action_history"
                 android:title="@string/history"
                 android:icon="@drawable/ic_history"
