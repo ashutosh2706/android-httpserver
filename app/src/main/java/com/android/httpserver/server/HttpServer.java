@@ -108,11 +108,10 @@ public final class HttpServer extends NanoHTTPD {
                 }
             }
         } catch (Exception e) {
-            return newFixedLengthResponse(Response.Status.INTERNAL_ERROR, MimeTypes.TEXT_PLAIN,
-                    "Server Error: " + e.getMessage());
+            return errorResponse(Response.Status.INTERNAL_ERROR, "500", e.getClass().getSimpleName());
         }
 
-        return newFixedLengthResponse(Response.Status.NOT_FOUND, MimeTypes.TEXT_HTML, "<h1>404 Not Found</h1>");
+        return errorResponse(Response.Status.NOT_FOUND, "404", "");
     }
 
     private Response handleBrowse(String uri) {
@@ -133,8 +132,7 @@ public final class HttpServer extends NanoHTTPD {
 
         DocumentFile folder = navigateToPath(path);
         if (folder == null || !folder.isDirectory()) {
-            return newFixedLengthResponse(Response.Status.NOT_FOUND, MimeTypes.TEXT_HTML,
-                    "<h1>404 - Folder not found</h1>");
+            return errorResponse(Response.Status.NOT_FOUND, "404", "");
         }
 
         List<Map<String, String>> items = new ArrayList<>();
@@ -185,8 +183,7 @@ public final class HttpServer extends NanoHTTPD {
 
         DocumentFile file = navigateToPath(path);
         if (file == null || !file.isFile()) {
-            return newFixedLengthResponse(Response.Status.NOT_FOUND, MimeTypes.TEXT_HTML,
-                    "<h1>404 - File not found</h1>");
+            return errorResponse(Response.Status.NOT_FOUND, "404", "");
         }
 
         try {
@@ -207,8 +204,7 @@ public final class HttpServer extends NanoHTTPD {
             }
             return response;
         } catch (Exception e) {
-            return newFixedLengthResponse(Response.Status.INTERNAL_ERROR, MimeTypes.TEXT_PLAIN,
-                    "Error reading file: " + e.getMessage());
+            return errorResponse(Response.Status.INTERNAL_ERROR, "500", e.getClass().getSimpleName());
         }
     }
 
@@ -226,7 +222,7 @@ public final class HttpServer extends NanoHTTPD {
 
         DocumentFile folder = navigateToPath(path);
         if (folder == null || !folder.isDirectory()) {
-            return newFixedLengthResponse(Response.Status.NOT_FOUND, MimeTypes.TEXT_PLAIN, "Folder not found");
+            return errorResponse(Response.Status.NOT_FOUND, "404", "");
         }
 
         Map<String, String> files = new HashMap<>();
@@ -309,7 +305,7 @@ public final class HttpServer extends NanoHTTPD {
 
         DocumentFile folder = navigateToPath(path);
         if (folder == null || !folder.isDirectory()) {
-            return newFixedLengthResponse(Response.Status.NOT_FOUND, MimeTypes.TEXT_PLAIN, "Folder not found");
+            return errorResponse(Response.Status.NOT_FOUND, "404", "");
         }
 
         Map<String, String> files = new HashMap<>();
@@ -416,6 +412,24 @@ public final class HttpServer extends NanoHTTPD {
             }
         }
         return sb.toString();
+    }
+
+    private Response errorResponse(Response.Status status, String assetName, String errorCode) {
+        try {
+            InputStream is = context.getAssets().open(assetName);
+            byte[] buffer = new byte[is.available()];
+            is.read(buffer);
+            is.close();
+            String html = new String(buffer, "UTF-8");
+            if (errorCode != null && !errorCode.isEmpty()) {
+                html = html.replace("{{error_code}}", escapeHtml(errorCode));
+            } else {
+                html = html.replace("{{error_code}}", "");
+            }
+            return newFixedLengthResponse(status, MimeTypes.TEXT_HTML, html);
+        } catch (IOException e) {
+            return newFixedLengthResponse(status, MimeTypes.TEXT_PLAIN, "Error: " + status.getDescription());
+        }
     }
 
     private String humanSize(long size) {
