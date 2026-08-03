@@ -64,7 +64,7 @@ public class MainActivity extends AppCompatActivity {
         if (!hasDirectoryPermission()) {
             requestDirectoryPermission();
         } else {
-            fileNameView.setText("Folder: " + getSavedDirName());
+            fileNameView.setText("Shared Folder: " + getSavedDirName());
         }
 
         fileNameView.setOnClickListener(new View.OnClickListener() {
@@ -116,7 +116,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void requestDirectoryPermission() {
         showAlert(this, "Select Shared Folder",
-                "Choose a folder to share over the network. All files and subfolders will be accessible.",
+                "Choose a folder to share over the network. All files and subfolder in that directory will be accessible.",
                 this::openDirectoryPicker);
     }
 
@@ -144,7 +144,7 @@ public class MainActivity extends AppCompatActivity {
 
                 DocumentFile dir = DocumentFile.fromTreeUri(this, treeUri);
                 String dirName = dir != null ? dir.getName() : "Selected";
-                fileNameView.setText("Folder: " + dirName);
+                fileNameView.setText("Shared Folder: " + dirName);
                 Toast.makeText(this, "Folder selected: " + dirName, Toast.LENGTH_SHORT).show();
             }
         }
@@ -224,13 +224,6 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         switch (item.getItemId()) {
-            case R.id.action_change_folder:
-                if (SERVER_RUNNING) {
-                    Toast.makeText(this, "Stop server first", Toast.LENGTH_SHORT).show();
-                } else {
-                    openDirectoryPicker();
-                }
-                return true;
 
             case R.id.action_history:
                 historyViewModel.getAllHistory().observe(this, historyList -> {

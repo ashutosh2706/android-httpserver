@@ -10,12 +10,6 @@
         <menu>
 
             <item
-                android:id="@+id/action_change_folder"
-                android:title="Change Folder"
-                android:icon="@drawable/ic_download"
-                app:showAsAction="never" />
-
-            <item
                 android:id="@+id/action_history"
                 android:title="@string/history"
                 android:icon="@drawable/ic_history"
