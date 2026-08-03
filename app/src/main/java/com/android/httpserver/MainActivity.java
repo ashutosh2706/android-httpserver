@@ -10,12 +10,9 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
-import android.provider.OpenableColumns;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -26,30 +23,21 @@ import android.widget.Toast;
 
 import com.android.httpserver.component.BottomSheet;
 import com.android.httpserver.component.HistoryViewModel;
-import com.android.httpserver.model.FileInfo;
 import com.android.httpserver.server.HttpServer;
 import com.android.httpserver.util.NotificationHelper;
 import com.android.httpserver.util.QRGen;
 
-import java.util.Locale;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.UUID;
-import java.time.LocalDateTime;
-
 public class MainActivity extends AppCompatActivity {
 
     public static final int PORT = 8000;
-    public static ConcurrentHashMap<String, FileInfo> fileMap;
-    public static boolean RECEIVE_MODE = false;
 
-    Button filePickerBtn, startServerBtn;
+    Button startServerBtn;
     TextView fileNameView, ipView;
     ImageView qrView;
     HttpServer httpServer;
     NotificationHelper notificationHelper;
 
-    private static final int FILE_PICKER_REQUEST_CODE = 101;
-    private static final int EXT_LOCATION_PICKER_REQUEST_CODE = 105;
+    private static final int DIR_PICKER_REQUEST_CODE = 200;
     private static boolean SERVER_RUNNING = false;
     private HistoryViewModel historyViewModel;
     private final String noConnectionMessage = "Can't retrieve IP address. Check your network connection and try again";
@@ -59,172 +47,143 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-//        filePickerBtn = findViewById(R.id.picker_btn);
         startServerBtn = findViewById(R.id.server_btn);
         fileNameView = findViewById(R.id.file_name);
         ipView = findViewById(R.id.ip_view);
         qrView = findViewById(R.id.qr_view);
-        historyViewModel = new ViewModelProvider(this, ViewModelProvider.AndroidViewModelFactory.getInstance(getApplication())).get(HistoryViewModel.class);
+        historyViewModel = new ViewModelProvider(this,
+                ViewModelProvider.AndroidViewModelFactory.getInstance(getApplication())).get(HistoryViewModel.class);
         notificationHelper = new NotificationHelper(MainActivity.this);
         ipView.setText("");
         qrView.setImageDrawable(null);
 
-        httpServer = HttpServer.getInstance(MainActivity.this, PORT, getContentResolver(), historyViewModel, notificationHelper);
-        fileMap = new ConcurrentHashMap<>();
+        httpServer = HttpServer.getInstance(MainActivity.this, PORT, getContentResolver(), historyViewModel,
+                notificationHelper);
+
+        // Check if we already have directory permission
+        if (!hasDirectoryPermission()) {
+            requestDirectoryPermission();
+        } else {
+            fileNameView.setText("Folder: " + getSavedDirName());
+        }
 
         fileNameView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if(SERVER_RUNNING) {
-                    Toast.makeText(MainActivity.this, "Server running", Toast.LENGTH_SHORT).show();
+                if (SERVER_RUNNING) {
+                    Toast.makeText(MainActivity.this, "Stop server first", Toast.LENGTH_SHORT).show();
                     return;
                 }
-                Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
-                intent.addCategory(Intent.CATEGORY_OPENABLE);
-                intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                intent.setType("*/*");
-                startActivityForResult(intent, FILE_PICKER_REQUEST_CODE);
+                requestDirectoryPermission();
             }
         });
 
         startServerBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if(httpServer != null) {
+                if (httpServer != null) {
                     startServer();
                 }
             }
         });
+    }
 
+    private boolean hasDirectoryPermission() {
+        SharedPreferences prefs = getSharedPreferences(Constants.SHARED_PREFERENCES, MODE_PRIVATE);
+        String uriString = prefs.getString(Constants.KEY_EXT_PATH_URI, null);
+        if (uriString == null)
+            return false;
+        try {
+            DocumentFile dir = DocumentFile.fromTreeUri(this, Uri.parse(uriString));
+            return dir != null && dir.exists() && dir.canRead();
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    private String getSavedDirName() {
+        SharedPreferences prefs = getSharedPreferences(Constants.SHARED_PREFERENCES, MODE_PRIVATE);
+        String uriString = prefs.getString(Constants.KEY_EXT_PATH_URI, null);
+        if (uriString == null)
+            return "";
+        try {
+            DocumentFile dir = DocumentFile.fromTreeUri(this, Uri.parse(uriString));
+            return dir != null ? dir.getName() : "";
+        } catch (Exception e) {
+            return "";
+        }
+    }
+
+    private void requestDirectoryPermission() {
+        showAlert(this, "Select Shared Folder",
+                "Choose a folder to share over the network. All files and subfolders will be accessible.",
+                this::openDirectoryPicker);
+    }
+
+    private void openDirectoryPicker() {
+        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
+        intent.addFlags(
+                Intent.FLAG_GRANT_READ_URI_PERMISSION
+                        | Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                        | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
+        startActivityForResult(intent, DIR_PICKER_REQUEST_CODE);
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
-        if(requestCode == FILE_PICKER_REQUEST_CODE && resultCode == RESULT_OK) {
-            if(data != null) {
-                Uri fileUri = data.getData();
-                /* don't require persistent read permission */
-                // getContentResolver().takePersistableUriPermission(fileUri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                String fileName = getFileNameFromUri(fileUri);
-                String fileSize = getFileSizeReadable(fileUri);
-                String uid = UUID.randomUUID().toString().substring(0, 5).trim();
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    fileMap.put(uid, new FileInfo(fileUri, uid, LocalDateTime.now(), fileName, fileSize));
-                } else {
-                    fileMap.put(uid, new FileInfo(fileUri, uid, null, fileName, fileSize));
-                }
-                fileNameView.setText("Sharing: " + fileName);
-            }
-        }
-
-        if (requestCode == EXT_LOCATION_PICKER_REQUEST_CODE && resultCode == RESULT_OK) {
+        if (requestCode == DIR_PICKER_REQUEST_CODE && resultCode == RESULT_OK) {
             if (data != null) {
                 Uri treeUri = data.getData();
-                final int takeFlags = data.getFlags() & (Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
-                getContentResolver().takePersistableUriPermission(treeUri, Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
-                SharedPreferences preferences = getSharedPreferences(Constants.SHARED_PREFERENCES, MODE_PRIVATE);
-                SharedPreferences.Editor editor = preferences.edit();
-                editor.putString(Constants.KEY_EXT_PATH_URI, treeUri.toString());
-                editor.apply();
-                handleFileReceive();
+                getContentResolver().takePersistableUriPermission(treeUri,
+                        Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+
+                SharedPreferences prefs = getSharedPreferences(Constants.SHARED_PREFERENCES, MODE_PRIVATE);
+                prefs.edit().putString(Constants.KEY_EXT_PATH_URI, treeUri.toString()).apply();
+
+                DocumentFile dir = DocumentFile.fromTreeUri(this, treeUri);
+                String dirName = dir != null ? dir.getName() : "Selected";
+                fileNameView.setText("Folder: " + dirName);
+                Toast.makeText(this, "Folder selected: " + dirName, Toast.LENGTH_SHORT).show();
             }
         }
 
-        if (requestCode == EXT_LOCATION_PICKER_REQUEST_CODE && resultCode == RESULT_CANCELED) {
-            showAlert(
-                    MainActivity.this,
-                    "Permission Denied",
-                    "Storage access is required for receiving files",
-                    () -> {}
-            );
-        }
-    }
-
-    private String getFileNameFromUri(Uri uri) {
-        String result = null;
-        if (uri.getScheme().equals("content")) {
-            Cursor cursor = getContentResolver().query(uri, null, null, null, null);
-            try {
-                if (cursor != null && cursor.moveToFirst()) {
-                    int nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
-                    if (nameIndex != -1) {
-                        result = cursor.getString(nameIndex);
-                    }
-                }
-            } finally {
-                if (cursor != null) {
-                    cursor.close();
-                }
+        if (requestCode == DIR_PICKER_REQUEST_CODE && resultCode == RESULT_CANCELED) {
+            if (!hasDirectoryPermission()) {
+                showAlert(this, "Permission Required",
+                        "A folder must be selected to use this app.",
+                        () -> {
+                        });
             }
         }
-        // Fallback to last path segment if DISPLAY_NAME not available
-        if (result == null) {
-            result = uri.getLastPathSegment();
-        }
-        return result;
-    }
-
-    private String getFileSizeReadable(Uri fileUri) {
-        Cursor cursor = getContentResolver().query(fileUri, null, null, null, null);
-        String result = "";
-
-        if (cursor != null && cursor.moveToFirst()) {
-            int sizeIndex = cursor.getColumnIndex(OpenableColumns.SIZE);
-            if (!cursor.isNull(sizeIndex)) {
-                long sizeInBytes = cursor.getLong(sizeIndex);
-                result = formatFileSize(sizeInBytes);
-            }
-            cursor.close();
-        }
-        return result;
-    }
-
-    private String formatFileSize(long sizeInBytes) {
-        double size = sizeInBytes;
-        String unit;
-        if (sizeInBytes >= 1024L * 1024L * 1024L) {
-            size = size / (1024.0 * 1024.0 * 1024.0);
-            unit = "GB";
-        } else if (sizeInBytes >= 1024L * 1024L) {
-            size = size / (1024.0 * 1024.0);
-            unit = "MB";
-        } else {
-            size = size / 1024.0;
-            unit = "KB";
-        }
-        return String.format(Locale.getDefault(), "%.2f %s", size, unit);
     }
 
     private void stopServer() {
         SERVER_RUNNING = false;
-        RECEIVE_MODE = false;
         Toast.makeText(MainActivity.this, "Stopping server", Toast.LENGTH_SHORT).show();
         httpServer.stop();
         qrView.setImageDrawable(null);
         ipView.setText("");
-        fileMap.clear();
-        fileNameView.setText("");
         startServerBtn.setText("Start Server");
         startServerBtn.setBackgroundResource(R.drawable.start_server_btn_bg);
-//            filePickerBtn.setBackgroundResource(R.drawable.active_file_picker_btn_bg);
         Toast.makeText(MainActivity.this, "Server stopped", Toast.LENGTH_SHORT).show();
     }
 
     private void startServer() {
-        if(SERVER_RUNNING) {
+        if (SERVER_RUNNING) {
             stopServer();
             return;
         }
 
-        if(fileMap.size() == 0 && !RECEIVE_MODE) {
-            Toast.makeText(MainActivity.this, "Please select a file", Toast.LENGTH_SHORT).show();
+        if (!hasDirectoryPermission()) {
+            Toast.makeText(this, "Please select a folder first", Toast.LENGTH_SHORT).show();
+            requestDirectoryPermission();
             return;
         }
 
         String ip = httpServer.getIPAddress();
-        if(ip != null && ip.length() > 0) {
+        if (ip != null && ip.length() > 0) {
             String address = "http://" + ip + ":" + PORT;
             Bitmap qrBitmap = null;
             try {
@@ -238,24 +197,19 @@ public class MainActivity extends AppCompatActivity {
                 httpServer.start();
                 SERVER_RUNNING = true;
                 ipView.setText(address);
-                if(qrBitmap != null)
+                if (qrBitmap != null)
                     qrView.setImageBitmap(qrBitmap);
-                if (RECEIVE_MODE)
-                    fileNameView.setText("Ready to receive file");
+                fileNameView.setText("Serving: " + getSavedDirName());
                 startServerBtn.setText("Stop Server");
                 startServerBtn.setBackgroundResource(R.drawable.stop_server_btn_bg);
-//                filePickerBtn.setBackgroundResource(R.drawable.inactive_file_picker_btn_bg);
-                Toast.makeText(MainActivity.this, "Server started successfully on port: " + PORT, Toast.LENGTH_SHORT).show();
+                Toast.makeText(MainActivity.this, "Server started on port: " + PORT, Toast.LENGTH_SHORT).show();
             } catch (Exception e) {
                 SERVER_RUNNING = false;
-                RECEIVE_MODE = false;
                 Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
                 ipView.setText("Failed to start server");
                 startServerBtn.setText("Start Server");
                 startServerBtn.setBackgroundResource(R.drawable.start_server_btn_bg);
-//                filePickerBtn.setBackgroundResource(R.drawable.active_file_picker_btn_bg);
             }
-
         } else {
             ipView.setText(noConnectionMessage);
         }
@@ -270,6 +224,14 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         switch (item.getItemId()) {
+            case R.id.action_change_folder:
+                if (SERVER_RUNNING) {
+                    Toast.makeText(this, "Stop server first", Toast.LENGTH_SHORT).show();
+                } else {
+                    openDirectoryPicker();
+                }
+                return true;
+
             case R.id.action_history:
                 historyViewModel.getAllHistory().observe(this, historyList -> {
                     if (getSupportFragmentManager().findFragmentByTag("BottomSheetTag") == null) {
@@ -286,49 +248,9 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(new Intent(MainActivity.this, AppInfo.class));
                 return true;
 
-            case R.id.action_file_receive:
-                handleFileReceive();
-                return true;
-
             default:
                 return super.onOptionsItemSelected(item);
         }
-    }
-
-    private void handleFileReceive() {
-        SharedPreferences sharedPreferences = getSharedPreferences(Constants.SHARED_PREFERENCES, MODE_PRIVATE);
-        String externalUri = sharedPreferences.getString(Constants.KEY_EXT_PATH_URI, null);
-        try {
-            if (externalUri == null) {
-                showAlert(MainActivity.this, "Storage Permission", "App requires access to external storage for receiving files",
-                        this::getPersistableWritePermission
-                );
-                return;
-            }
-            DocumentFile extDir = DocumentFile.fromTreeUri(MainActivity.this, Uri.parse(externalUri));
-            if (extDir == null || !extDir.exists() || !extDir.canRead() || !extDir.canWrite()) {
-                showAlert(MainActivity.this, "Storage Permission", "App requires access to external storage for receiving files",
-                        this::getPersistableWritePermission
-                );
-                return;
-            }
-        } catch (Exception e) {
-            Toast.makeText(this, "Error: "+e.getClass().getSimpleName(), Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        if (SERVER_RUNNING) {
-            Toast.makeText(MainActivity.this, "Server running", Toast.LENGTH_SHORT).show();
-            return;
-        }
-        RECEIVE_MODE = true;
-        startServer();
-    }
-
-    private void getPersistableWritePermission() {
-        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
-        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
-        startActivityForResult(intent, EXT_LOCATION_PICKER_REQUEST_CODE);
     }
 
     private void showAlert(Context context, String title, String message, Runnable action) {
@@ -346,7 +268,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        if(httpServer != null) {
+        if (httpServer != null) {
             httpServer.stop();
             httpServer = null;
         }
