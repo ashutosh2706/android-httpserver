@@ -10,4 +10,5 @@
     <color name="layout_primary_background">#FFFFFF</color>
     <color name="layout_primaryVariant_background">#FFFFFF</color>
     <color name="text_primary_foreground">#FF000000</color>
+    <color name="text_secondary_foreground">#64748B</color>
 </resources>

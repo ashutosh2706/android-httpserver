@@ -19,4 +19,5 @@
     <string name="menu">Menu</string>
     <string name="version">Version</string>
     <string name="receive_file">Receive File</string>
+    <string name="http_server">HTTP Server</string>
 </resources>
