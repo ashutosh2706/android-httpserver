@@ -2,7 +2,7 @@
 <html>
 
 <head>
-    <title>Web Server</title>
+    <title>Android Web Server</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
@@ -159,13 +159,45 @@
                 width: 100%;
             }
         }
+
+        .progress-container {
+            display: none;
+            margin-top: 12px;
+            background: #e2e8f0;
+            border-radius: 8px;
+            overflow: hidden;
+            height: 8px;
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #2563eb, #4f46e5);
+            border-radius: 8px;
+            transition: width 0.2s ease;
+        }
+
+        .upload-status {
+            margin-top: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            display: none;
+        }
+
+        .upload-status.success {
+            color: #16a34a;
+        }
+
+        .upload-status.error {
+            color: #dc2626;
+        }
     </style>
 </head>
 
 <body>
 
     <h2>Shared Folder</h2>
-    <p><b>Current:</b> /{{current_path}}</p>
+    <p><b>Root:</b> /{{current_path}}</p>
     {{parent_link}}
 
     <div class="table-container">
@@ -183,10 +215,14 @@
         </table>
     </div>
 
-    <form action="{{upload_action}}" method="post" enctype="multipart/form-data">
+    <form id="uploadForm" action="{{upload_action}}" method="post" enctype="multipart/form-data">
         <h3>Upload Files</h3>
-        <input type="file" name="files" multiple>
-        <button>Upload</button>
+        <input type="file" id="fileInput" name="files" multiple>
+        <button type="submit" id="uploadBtn">Upload</button>
+        <div class="progress-container" id="progressContainer">
+            <div class="progress-bar" id="progressBar"></div>
+        </div>
+        <div class="upload-status" id="uploadStatus"></div>
     </form>
 
     <form action="{{mkdir_action}}" method="post">
@@ -194,6 +230,69 @@
         <input name="dirname" placeholder="Folder Name">
         <button>Create</button>
     </form>
+
+    <script>
+        document.getElementById('uploadForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+            var fileInput = document.getElementById('fileInput');
+            if (!fileInput.files.length) return;
+
+            var formData = new FormData();
+            for (var i = 0; i < fileInput.files.length; i++) {
+                formData.append('files', fileInput.files[i]);
+            }
+
+            var xhr = new XMLHttpRequest();
+            var action = this.getAttribute('action');
+            xhr.open('POST', action, true);
+
+            var progressContainer = document.getElementById('progressContainer');
+            var progressBar = document.getElementById('progressBar');
+            var uploadStatus = document.getElementById('uploadStatus');
+            var uploadBtn = document.getElementById('uploadBtn');
+
+            progressContainer.style.display = 'block';
+            progressBar.style.width = '0%';
+            uploadStatus.style.display = 'none';
+            uploadBtn.disabled = true;
+            uploadBtn.textContent = 'Uploading...';
+
+            xhr.upload.onprogress = function (event) {
+                if (event.lengthComputable) {
+                    var percent = Math.round((event.loaded / event.total) * 100);
+                    progressBar.style.width = percent + '%';
+                }
+            };
+
+            xhr.onload = function () {
+                uploadBtn.disabled = false;
+                uploadBtn.textContent = 'Upload';
+                if (xhr.status === 200 || xhr.status === 301 || xhr.status === 302) {
+                    progressBar.style.width = '100%';
+                    uploadStatus.className = 'upload-status success';
+                    uploadStatus.textContent = '✔ Upload successful';
+                    uploadStatus.style.display = 'block';
+                    setTimeout(function () { window.location.reload(); }, 800);
+                } else {
+                    uploadStatus.className = 'upload-status error';
+                    uploadStatus.textContent = '✖ Upload failed (' + xhr.status + ')';
+                    uploadStatus.style.display = 'block';
+                    progressContainer.style.display = 'none';
+                }
+            };
+
+            xhr.onerror = function () {
+                uploadBtn.disabled = false;
+                uploadBtn.textContent = 'Upload';
+                progressContainer.style.display = 'none';
+                uploadStatus.className = 'upload-status error';
+                uploadStatus.textContent = '✖ Network error during upload';
+                uploadStatus.style.display = 'block';
+            };
+
+            xhr.send(formData);
+        });
+    </script>
 
 </body>
 
