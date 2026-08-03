@@ -12,6 +12,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -24,6 +25,7 @@ import android.widget.Toast;
 import com.android.httpserver.component.BottomSheet;
 import com.android.httpserver.component.HistoryViewModel;
 import com.android.httpserver.server.HttpServer;
+import com.android.httpserver.server.ServerService;
 import com.android.httpserver.util.NotificationHelper;
 import com.android.httpserver.util.QRGen;
 
@@ -163,6 +165,7 @@ public class MainActivity extends AppCompatActivity {
         SERVER_RUNNING = false;
         Toast.makeText(MainActivity.this, "Stopping server", Toast.LENGTH_SHORT).show();
         httpServer.stop();
+        stopService(new Intent(this, ServerService.class));
         qrView.setImageDrawable(null);
         ipView.setText("");
         startServerBtn.setText("Start Server");
@@ -202,6 +205,16 @@ public class MainActivity extends AppCompatActivity {
                 fileNameView.setText("Serving: " + getSavedDirName());
                 startServerBtn.setText("Stop Server");
                 startServerBtn.setBackgroundResource(R.drawable.stop_server_btn_bg);
+
+                // Start foreground service to keep server alive
+                Intent serviceIntent = new Intent(this, ServerService.class);
+                serviceIntent.putExtra("address", address);
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    startForegroundService(serviceIntent);
+                } else {
+                    startService(serviceIntent);
+                }
+
                 Toast.makeText(MainActivity.this, "Server started on port: " + PORT, Toast.LENGTH_SHORT).show();
             } catch (Exception e) {
                 SERVER_RUNNING = false;
@@ -265,5 +278,6 @@ public class MainActivity extends AppCompatActivity {
             httpServer.stop();
             httpServer = null;
         }
+        stopService(new Intent(this, ServerService.class));
     }
 }
