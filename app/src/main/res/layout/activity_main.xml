@@ -19,7 +19,7 @@
             android:id="@+id/header_title"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="HTTP Server"
+            android:text="@string/http_server"
             android:textSize="26sp"
             android:textStyle="bold"
             android:textColor="@color/text_primary_foreground"

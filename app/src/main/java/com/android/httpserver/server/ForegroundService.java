@@ -17,7 +17,7 @@ import androidx.core.app.NotificationCompat;
 import com.android.httpserver.MainActivity;
 import com.android.httpserver.R;
 
-public class ServerService extends Service {
+public class ForegroundService extends Service {
 
     private static final String CHANNEL_ID = "server_foreground_channel";
     private static final int NOTIFICATION_ID = 100;
