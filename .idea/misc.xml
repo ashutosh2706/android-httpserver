@@ -7,6 +7,7 @@
         <entry key="..\:/AndroidProjects/HttpServer/app/src/main/res/drawable-night/ic_download.xml" value="0.2703125" />
         <entry key="..\:/AndroidProjects/HttpServer/app/src/main/res/drawable-night/ic_file_android_package.xml" value="0.2703125" />
         <entry key="..\:/AndroidProjects/HttpServer/app/src/main/res/drawable-night/ic_file_audio.xml" value="0.2703125" />
+        <entry key="..\:/AndroidProjects/HttpServer/app/src/main/res/drawable-night/ic_folder_custom.xml" value="0.2703125" />
         <entry key="..\:/AndroidProjects/HttpServer/app/src/main/res/drawable-night/ic_history.xml" value="0.2703125" />
         <entry key="..\:/AndroidProjects/HttpServer/app/src/main/res/drawable-night/ic_info.xml" value="0.2703125" />
         <entry key="..\:/AndroidProjects/HttpServer/app/src/main/res/drawable-night/ic_launcher_monochrome.xml" value="0.2703125" />
@@ -15,11 +16,13 @@
         <entry key="..\:/AndroidProjects/HttpServer/app/src/main/res/drawable/ic_baseline_language_24.xml" value="0.2703125" />
         <entry key="..\:/AndroidProjects/HttpServer/app/src/main/res/drawable/ic_delete.xml" value="0.2703125" />
         <entry key="..\:/AndroidProjects/HttpServer/app/src/main/res/drawable/ic_download.xml" value="0.2703125" />
+        <entry key="..\:/AndroidProjects/HttpServer/app/src/main/res/drawable/ic_folder_custom.xml" value="0.2703125" />
         <entry key="..\:/AndroidProjects/HttpServer/app/src/main/res/drawable/ic_history.xml" value="0.2703125" />
         <entry key="..\:/AndroidProjects/HttpServer/app/src/main/res/drawable/ic_info.xml" value="0.2703125" />
         <entry key="..\:/AndroidProjects/HttpServer/app/src/main/res/drawable/ic_launcher_background.xml" value="0.2703125" />
         <entry key="..\:/AndroidProjects/HttpServer/app/src/main/res/drawable/ic_launcher_monochrome.xml" value="0.2703125" />
         <entry key="..\:/AndroidProjects/HttpServer/app/src/main/res/layout/activity_app_info.xml" value="0.25025641025641027" />
+        <entry key="..\:/AndroidProjects/HttpServer/app/src/main/res/layout/activity_history.xml" value="0.25416666666666665" />
         <entry key="..\:/AndroidProjects/HttpServer/app/src/main/res/layout/activity_main.xml" value="0.25025641025641027" />
         <entry key="..\:/AndroidProjects/HttpServer/app/src/main/res/layout/bottom_sheet.xml" value="0.25416666666666665" />
         <entry key="..\:/AndroidProjects/HttpServer/app/src/main/res/layout/recycler_item.xml" value="0.25416666666666665" />

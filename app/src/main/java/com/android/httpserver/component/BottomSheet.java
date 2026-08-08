@@ -22,10 +22,12 @@ public class BottomSheet extends BottomSheetDialogFragment {
     private RecyclerView recyclerView;
     private List<History> historyList;
     private HistoryAdapter.OnDeleteClickListener deleteClickListener;
+    private HistoryAdapter.OnItemClickListener itemClickListener;
 
-    public BottomSheet(List<History> historyList, HistoryAdapter.OnDeleteClickListener deleteClickListener) {
+    public BottomSheet(List<History> historyList, HistoryAdapter.OnDeleteClickListener deleteClickListener, HistoryAdapter.OnItemClickListener itemClickListener) {
         this.historyList = historyList;
         this.deleteClickListener = deleteClickListener;
+        this.itemClickListener = itemClickListener;
     }
 
     @Nullable
@@ -36,7 +38,7 @@ public class BottomSheet extends BottomSheetDialogFragment {
 
         recyclerView = view.findViewById(R.id.recyclerView);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-        HistoryAdapter adapter = new HistoryAdapter(deleteClickListener);
+        HistoryAdapter adapter = new HistoryAdapter(deleteClickListener, itemClickListener);
         adapter.setHistoryList(historyList);
         recyclerView.setAdapter(adapter);
         return view;
