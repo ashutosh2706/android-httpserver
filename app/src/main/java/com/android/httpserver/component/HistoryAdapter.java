@@ -22,11 +22,17 @@ public class HistoryAdapter extends RecyclerView.Adapter<HistoryAdapter.ViewHold
         void onDeleteClick(History history);
     }
 
-    private List<History> historyList = new ArrayList<>();
-    private final OnDeleteClickListener listener;
+    public interface OnItemClickListener {
+        void onItemClick(History history);
+    }
 
-    public HistoryAdapter(OnDeleteClickListener listener) {
-        this.listener = listener;
+    private List<History> historyList = new ArrayList<>();
+    private final OnDeleteClickListener deleteListener;
+    private final OnItemClickListener itemClickListener;
+
+    public HistoryAdapter(OnDeleteClickListener deleteListener, OnItemClickListener itemClickListener) {
+        this.deleteListener = deleteListener;
+        this.itemClickListener = itemClickListener;
     }
 
     public void setHistoryList(List<History> historyList) {
@@ -64,7 +70,13 @@ public class HistoryAdapter extends RecyclerView.Adapter<HistoryAdapter.ViewHold
         holder.fileSizeTextView.setText(item.getFileSize());
         holder.subtitleTextView.setText(item.getExtra());
         holder.imageView.setImageResource(item.getImageResId());
-        holder.actionButton.setOnClickListener(v -> listener.onDeleteClick(item));
+        holder.actionButton.setVisibility(View.VISIBLE);
+        holder.actionButton.setOnClickListener(v -> deleteListener.onDeleteClick(item));
+        holder.itemView.setOnClickListener(v -> {
+            if (itemClickListener != null) {
+                itemClickListener.onItemClick(item);
+            }
+        });
     }
 
     @Override

@@ -239,15 +239,7 @@ public class MainActivity extends AppCompatActivity {
         switch (item.getItemId()) {
 
             case R.id.action_history:
-                historyViewModel.getAllHistory().observe(this, historyList -> {
-                    if (getSupportFragmentManager().findFragmentByTag("BottomSheetTag") == null) {
-                        BottomSheet bottomSheet = new BottomSheet(historyList, history -> {
-                            historyViewModel.delete(history);
-                            Toast.makeText(MainActivity.this, "History deleted", Toast.LENGTH_SHORT).show();
-                        });
-                        bottomSheet.show(getSupportFragmentManager(), "BottomSheetTag");
-                    }
-                });
+                startActivity(new Intent(MainActivity.this, HistoryActivity.class));
                 return true;
 
             case R.id.action_info:
