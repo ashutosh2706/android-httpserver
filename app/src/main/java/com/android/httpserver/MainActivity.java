@@ -41,8 +41,8 @@ public class MainActivity extends AppCompatActivity {
 
     private static final int DIR_PICKER_REQUEST_CODE = 200;
     private static boolean SERVER_RUNNING = false;
-    private HistoryViewModel historyViewModel;
     private final String noConnectionMessage = "Can't retrieve IP address. Check your network connection and try again";
+    private final String sharedDirPrefix = "Shared Folder";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,7 +53,7 @@ public class MainActivity extends AppCompatActivity {
         fileNameView = findViewById(R.id.file_name);
         ipView = findViewById(R.id.ip_view);
         qrView = findViewById(R.id.qr_view);
-        historyViewModel = new ViewModelProvider(this,
+        HistoryViewModel historyViewModel = new ViewModelProvider(this,
                 ViewModelProvider.AndroidViewModelFactory.getInstance(getApplication())).get(HistoryViewModel.class);
         notificationHelper = new NotificationHelper(MainActivity.this);
         ipView.setText("");
@@ -66,7 +66,7 @@ public class MainActivity extends AppCompatActivity {
         if (!hasDirectoryPermission()) {
             requestDirectoryPermission();
         } else {
-            fileNameView.setText("Shared Folder: " + getSavedDirName());
+            fileNameView.setText(String.format("%s: %s", sharedDirPrefix, getSavedDirName()));
         }
 
         fileNameView.setOnClickListener(new View.OnClickListener() {
@@ -118,7 +118,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void requestDirectoryPermission() {
         showAlert(this, "Select Shared Folder",
-                "Choose a folder to share over the network. All files and subfolders in the selected folder will be accessible.",
+                "Choose a folder to share over the network. All files and subfolder inside it will be accessible.",
                 this::openDirectoryPicker);
     }
 
@@ -146,7 +146,7 @@ public class MainActivity extends AppCompatActivity {
 
                 DocumentFile dir = DocumentFile.fromTreeUri(this, treeUri);
                 String dirName = dir != null ? dir.getName() : "Selected";
-                fileNameView.setText("Shared Folder: " + dirName);
+                fileNameView.setText(String.format("%s: %s", sharedDirPrefix, dirName));
                 Toast.makeText(this, "Folder selected: " + dirName, Toast.LENGTH_SHORT).show();
             }
         }
@@ -154,7 +154,7 @@ public class MainActivity extends AppCompatActivity {
         if (requestCode == DIR_PICKER_REQUEST_CODE && resultCode == RESULT_CANCELED) {
             if (!hasDirectoryPermission()) {
                 showAlert(this, "Permission Required",
-                        "A folder must be selected to use this app.",
+                        "A shared folder must be selected to use this app.",
                         () -> {
                         });
             }
@@ -180,7 +180,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         if (!hasDirectoryPermission()) {
-            Toast.makeText(this, "Please select a folder first", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Storage access not present", Toast.LENGTH_SHORT).show();
             requestDirectoryPermission();
             return;
         }
@@ -239,15 +239,7 @@ public class MainActivity extends AppCompatActivity {
         switch (item.getItemId()) {
 
             case R.id.action_history:
-                historyViewModel.getAllHistory().observe(this, historyList -> {
-                    if (getSupportFragmentManager().findFragmentByTag("BottomSheetTag") == null) {
-                        BottomSheet bottomSheet = new BottomSheet(historyList, history -> {
-                            historyViewModel.delete(history);
-                            Toast.makeText(MainActivity.this, "History deleted", Toast.LENGTH_SHORT).show();
-                        });
-                        bottomSheet.show(getSupportFragmentManager(), "BottomSheetTag");
-                    }
-                });
+                startActivity(new Intent(MainActivity.this, HistoryActivity.class));
                 return true;
 
             case R.id.action_info:
